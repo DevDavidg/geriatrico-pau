@@ -32,13 +32,6 @@ export function formatTimestamp(iso: string) {
   }).format(new Date(iso));
 }
 
-export function toggleDateKey(dateKeys: string[], dateKey: string) {
-  if (dateKeys.includes(dateKey)) {
-    return dateKeys.filter((current) => current !== dateKey);
-  }
-  return [...dateKeys, dateKey].sort((a, b) => a.localeCompare(b));
-}
-
 export function buildCalendar(date: Date) {
   const year = date.getFullYear();
   const month = date.getMonth();

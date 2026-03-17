@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Alert, MenuItem, TextField } from "@mui/material";
-import type { UserRole } from "./geriatrico";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from "./ui";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
+
+export type UserRole = "admin" | "enfermeras" | "mucamas";
 
 export interface MockLoginCredentials {
   user: string;

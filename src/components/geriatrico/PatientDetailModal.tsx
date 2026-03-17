@@ -9,7 +9,8 @@ import type {
   IncidentLog,
   StatusType,
 } from "./types";
-import { Badge, Button } from "../ui";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import { formatTimestamp } from "./helpers";
 import { cn } from "../../lib/utils";
 

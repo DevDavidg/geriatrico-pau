@@ -2,11 +2,7 @@ import { useEffect, useState, useTransition } from "react";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
 import { Alert, Divider, LinearProgress, MenuItem, TextField } from "@mui/material";
 
-import { Button } from "../ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
-import { Badge } from "../ui/badge";
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Textarea } from "../ui";
 import {
   firstHandoverNotes,
   initialNurseCalendarNotes,
@@ -14,13 +10,13 @@ import {
   nurseActivities,
   nurseRoster,
 } from "./mock-data";
-import { formatTimestamp } from "./helpers";
+import { formatTimestamp, toggleDateKey } from "./helpers";
 import { VanillaCalendar } from "./VanillaCalendar";
 import { SHIFT_BADGE_VARIANT } from "../../lib/shift-colors";
-import type { HandoverNote, NurseActivity, UserCalendarMap, UserNoteMap } from "./types";
+import type { HandoverNote, NurseActivity, UserCalendarMap, UserNoteMap, UserRole } from "./types";
 
 interface NursesModuleProps {
-  readonly sessionRole: "admin" | "enfermeras" | "mucamas" | null;
+  readonly sessionRole: UserRole | null;
   readonly editMode: boolean;
 }
 
@@ -86,8 +82,7 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
     if (!sessionNurseId || sessionRole !== "enfermeras") return;
     setNurseDaysOff((prev) => {
       const current = prev[sessionNurseId] ?? [];
-      const exists = current.includes(dateKey);
-      const next = exists ? current.filter((d) => d !== dateKey) : [...current, dateKey].sort();
+      const next = toggleDateKey(current, dateKey);
       return { ...prev, [sessionNurseId]: next };
     });
   }

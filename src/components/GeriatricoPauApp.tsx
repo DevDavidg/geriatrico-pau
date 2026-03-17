@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ComponentType, type CSSProperties, useState } from "react";
 import AssignmentTurnedInOutlinedIcon from "@mui/icons-material/AssignmentTurnedInOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
@@ -7,12 +7,14 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 
 import { MockLoginCard, type MockLoginCredentials } from "./mock-login-card";
-import { Button } from "./ui/button";
-
-import type { ModuleKey, UserRole } from "./geriatrico/types";
-import { NursesModule } from "./geriatrico/NursesModule";
-import { GeriatricoModule } from "./geriatrico/GeriatricoModule";
-import { MucamasModule } from "./geriatrico/MucamasModule";
+import {
+  GeriatricoModule,
+  MucamasModule,
+  NursesModule,
+  type ModuleKey,
+  type UserRole,
+} from "./geriatrico";
+import { Button } from "./ui";
 
 const modules: { key: ModuleKey; label: string; subtitle: string }[] = [
   { key: "enfermeras", label: "Enfermeras", subtitle: "Perfil, guardias y francos" },
@@ -20,7 +22,7 @@ const modules: { key: ModuleKey; label: string; subtitle: string }[] = [
   { key: "mucamas", label: "Mucamas", subtitle: "Turnos, tareas y accidentes" },
 ];
 
-const moduleIcons: Record<ModuleKey, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+const moduleIcons: Record<ModuleKey, ComponentType<{ className?: string; style?: CSSProperties }>> = {
   enfermeras: AssignmentTurnedInOutlinedIcon,
   geriatrico: LocalHospitalOutlinedIcon,
   mucamas: EventAvailableOutlinedIcon,

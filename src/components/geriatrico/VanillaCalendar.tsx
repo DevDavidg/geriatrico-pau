@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Textarea } from "../ui/textarea";
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Textarea } from "../ui";
 import type { CalendarNoteMap } from "./types";
 import { buildCalendar, formatDateLong, toDateKey } from "./helpers";
 

@@ -292,7 +292,7 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
           </CardHeader>
           <CardContent className="space-y-4">
             {isPending && <LinearProgress />}
-            <div className="flex max-h-[400px] flex-col gap-3 overflow-y-auto">
+            <div className="flex flex-col gap-3">
               {displayMessages.map((note) => {
                 const nurse = nurseRoster.find((n) => n.id === note.nurseId);
                 return (

@@ -241,28 +241,22 @@ export function GeriatricoModule({
 
   return (
     <section className="module-content-grid">
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant={step === 0 ? "default" : "outline"}
-          size="sm"
-          onClick={() => setStep(0)}
-        >
-          1 · Alta de paciente
-        </Button>
-        <Button
-          variant={step === 1 ? "default" : "outline"}
-          size="sm"
-          onClick={() => setStep(1)}
-        >
-          2 · Documentacion y farmacia
-        </Button>
-        <Button
-          variant={step === 2 ? "default" : "outline"}
-          size="sm"
-          onClick={() => setStep(2)}
-        >
-          3 · Insumos y recepcion
-        </Button>
+      {/* Step pill switcher */}
+      <div className="flex gap-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-1">
+        {(["1 · Alta de paciente", "2 · Documentacion y farmacia", "3 · Insumos y recepcion"] as const).map((label, idx) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => setStep(idx as 0 | 1 | 2)}
+            className={`flex-1 rounded-[var(--radius-md)] px-3 py-1.5 text-sm font-medium transition-all ${
+              step === idx
+                ? "bg-[var(--color-surface)] shadow-[var(--shadow-card)] text-[var(--color-text-primary)]"
+                : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {step === 0 && (
@@ -344,7 +338,7 @@ export function GeriatricoModule({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <TableContainer className="rounded-lg border border-zinc-200">
+            <TableContainer className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)]">
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -360,10 +354,18 @@ export function GeriatricoModule({
                   {filteredPatients.map((patient) => (
                     <TableRow
                       key={patient.id}
-                      className="cursor-pointer hover:bg-zinc-50"
+                      className="cursor-pointer"
                       onClick={() => onOpenPatientDetail(patient.id)}
                     >
-                      <TableCell>{patient.fullName}</TableCell>
+                      <TableCell>
+                        <button
+                          type="button"
+                          className="text-left font-medium text-[var(--color-noche)] hover:underline"
+                          onClick={(e) => { e.stopPropagation(); onOpenPatientDetail(patient.id); }}
+                        >
+                          {patient.fullName}
+                        </button>
+                      </TableCell>
                       <TableCell>{patient.dni}</TableCell>
                       <TableCell>{patient.room}</TableCell>
                       <TableCell>
@@ -399,7 +401,7 @@ export function GeriatricoModule({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <h4 className="text-sm font-bold text-zinc-800">Adjuntar documentacion</h4>
+            <h4 className="font-['Lora',Georgia,serif] text-sm font-semibold text-[var(--color-text-primary)]">Adjuntar documentacion</h4>
             <div className="grid gap-3 md:grid-cols-3">
               <TextField
                 select
@@ -432,28 +434,28 @@ export function GeriatricoModule({
             <Button variant="secondary" disabled={readOnly} onClick={registerDocument}>
               Adjuntar archivo mock
             </Button>
-            <div className="space-y-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+            <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-3 space-y-2">
               {documents.slice(0, 4).map((document) => (
                 <div
                   key={document.id}
-                  className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5"
+                  className="rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-3 py-2.5"
                 >
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-auto p-0 font-bold text-zinc-800 hover:bg-transparent hover:underline"
+                    className="h-auto p-0 font-semibold text-[var(--color-noche)] hover:bg-transparent hover:underline"
                     onClick={() => onOpenPatientDetail(document.patientId)}
                   >
                     {document.patientName}
                   </Button>
-                  <p className="text-xs text-zinc-400">
+                  <p className="text-xs text-[var(--color-text-muted)]">
                     {document.category} · {document.fileName}
                   </p>
                 </div>
               ))}
             </div>
             <Divider />
-            <h4 className="text-sm font-bold text-zinc-800">Farmacia por paciente</h4>
+            <h4 className="font-['Lora',Georgia,serif] text-sm font-semibold text-[var(--color-text-primary)]">Farmacia por paciente</h4>
             <div className="grid gap-3 md:grid-cols-3">
               <TextField
                 select
@@ -519,22 +521,22 @@ export function GeriatricoModule({
               <MedicationOutlinedIcon fontSize="small" />
               Registrar ingreso de medicacion
             </Button>
-            <div className="space-y-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+            <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-3 space-y-2">
               {medicationLog.slice(0, 4).map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5"
+                  className="rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-3 py-2.5"
                 >
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-auto p-0 font-bold text-zinc-800 hover:bg-transparent hover:underline"
+                    className="h-auto p-0 font-semibold text-[var(--color-noche)] hover:bg-transparent hover:underline"
                     onClick={() => onOpenPatientDetail(item.patientId)}
                   >
                     {item.patientName}
                   </Button>
-                  <span className="text-zinc-800"> · {item.medication}</span>
-                  <p className="text-xs text-zinc-400">
+                  <span className="text-[var(--color-text-primary)]"> · {item.medication}</span>
+                  <p className="text-xs text-[var(--color-text-muted)]">
                     {item.category} · {item.dose} · {item.source}
                   </p>
                 </div>
@@ -599,23 +601,23 @@ export function GeriatricoModule({
             <Button variant="secondary" disabled={readOnly} onClick={registerSupply}>
               Guardar ingreso de insumo
             </Button>
-            <div className="space-y-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+            <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-3 space-y-2">
               {supplyLog.slice(0, 4).map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5"
+                  className="rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-3 py-2.5"
                 >
-                  <span className="text-sm font-bold text-zinc-800">
+                  <span className="text-sm font-semibold text-[var(--color-text-primary)]">
                     {item.category} · {item.item}
                   </span>
-                  <p className="text-xs text-zinc-400">
+                  <p className="text-xs text-[var(--color-text-muted)]">
                     {item.quantity} · {item.source} · {item.remito}
                   </p>
                 </div>
               ))}
             </div>
             <Divider />
-            <h4 className="text-sm font-bold text-zinc-800">Anotador digital de recepcion</h4>
+            <h4 className="font-['Lora',Georgia,serif] text-sm font-semibold text-[var(--color-text-primary)]">Anotador digital de recepcion</h4>
             <Textarea
               placeholder="Registrar novedades al recibir medicamentos o remitos..."
               value={receptionNote}
@@ -625,9 +627,9 @@ export function GeriatricoModule({
             <Button variant="outline" disabled={readOnly} onClick={addReceptionNote}>
               Guardar nota de recepcion
             </Button>
-            <div className="space-y-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+            <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-3 space-y-2">
               {receptionNotebook.slice(0, 5).map((note) => (
-                <p key={note} className="text-sm text-zinc-600">
+                <p key={note} className="text-sm text-[var(--color-text-secondary)]">
                   {note}
                 </p>
               ))}

@@ -4,7 +4,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
 import LocalHospitalOutlinedIcon from "@mui/icons-material/LocalHospitalOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
-import { Chip, CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 
 import { MockLoginCard, type MockLoginCredentials } from "./mock-login-card";
 import { Button } from "./ui/button";
@@ -35,16 +35,96 @@ const roleAccess: Record<UserRole, ModuleKey[]> = {
 const appTheme = createTheme({
   palette: {
     mode: "light",
-    primary: { main: "#0b5f84" },
-    secondary: { main: "#7f4f24" },
-    background: { default: "#f7fafc", paper: "#ffffff" },
+    primary: { main: "#2C2C2C" },
+    secondary: { main: "#829A84" },
+    error: { main: "#C36A59" },
+    warning: { main: "#E4A853" },
+    background: { default: "#F5F2ED", paper: "#FFFFFF" },
   },
   typography: {
-    fontFamily: '"Nunito Sans", "Segoe UI", sans-serif',
-    h1: { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 700 },
-    h2: { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 700 },
+    fontFamily: '"Inter", "Segoe UI", sans-serif',
+    h1: { fontFamily: '"Lora", Georgia, serif', fontWeight: 600 },
+    h2: { fontFamily: '"Lora", Georgia, serif', fontWeight: 600 },
+    h3: { fontFamily: '"Lora", Georgia, serif', fontWeight: 600 },
+  },
+  shape: { borderRadius: 10 },
+  components: {
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          "& .MuiOutlinedInput-root": {
+            backgroundColor: "#FFFFFF",
+            "& fieldset": { borderColor: "#D9D9D9" },
+            "&:hover fieldset": { borderColor: "#2C2C2C" },
+            "&.Mui-focused fieldset": { borderColor: "#2C2C2C" },
+          },
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        outlined: { backgroundColor: "#FFFFFF" },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: { borderRadius: 9999 },
+      },
+    },
+    MuiLinearProgress: {
+      styleOverrides: {
+        root: { borderRadius: 9999 },
+        bar: { backgroundColor: "#E4A853" },
+      },
+    },
+    MuiTableHead: {
+      styleOverrides: {
+        root: {
+          "& .MuiTableCell-root": {
+            fontFamily: '"Inter", sans-serif',
+            fontWeight: 500,
+            fontSize: "0.72rem",
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "#9B9B9B",
+            backgroundColor: "#FAF8F4",
+          },
+        },
+      },
+    },
+    MuiTableBody: {
+      styleOverrides: {
+        root: {
+          "& .MuiTableRow-root:hover": { backgroundColor: "#FAF8F4" },
+        },
+      },
+    },
+    MuiDivider: {
+      styleOverrides: {
+        root: { borderColor: "rgba(44,44,44,0.08)" },
+      },
+    },
+    MuiAlert: {
+      styleOverrides: {
+        root: { borderRadius: 10 },
+      },
+    },
   },
 });
+
+function getCurrentShiftAccent(): string {
+  const hour = new Date().getHours();
+  if (hour >= 7 && hour < 15) return "var(--color-manana)";
+  if (hour >= 15 && hour < 23) return "var(--color-tarde)";
+  return "var(--color-noche)";
+}
+
+function getCurrentShiftLabel(): string {
+  const hour = new Date().getHours();
+  if (hour >= 7 && hour < 15) return "Turno Mañana";
+  if (hour >= 15 && hour < 23) return "Turno Tarde";
+  return "Turno Noche";
+}
 
 export default function GeriatricoPauApp() {
   const [activeModule, setActiveModule] = useState<ModuleKey | null>(null);
@@ -56,6 +136,8 @@ export default function GeriatricoPauApp() {
   const [patientDetailId, setPatientDetailId] = useState<string | null>(null);
 
   const allowedModules = sessionRole ? roleAccess[sessionRole] : [];
+  const shiftAccent = getCurrentShiftAccent();
+  const shiftLabel = getCurrentShiftLabel();
 
   function submitLogin(credentials: MockLoginCredentials) {
     if (!credentials.user.trim() || credentials.pin.trim().length < 4) {
@@ -87,33 +169,31 @@ export default function GeriatricoPauApp() {
       <CssBaseline />
 
       {!sessionRole ? (
-        <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="flex min-h-screen items-stretch bg-[var(--color-ash)]">
           <MockLoginCard
             key={loginResetKey}
-            appName="Geriatrico Lumina"
+            appName="Merita"
             error={loginError}
             onSubmit={submitLogin}
           />
         </div>
       ) : (
         <div className="flex min-h-screen">
-          <nav className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col gap-8 overflow-y-auto border-r border-zinc-200/60 bg-white px-5 py-6 shadow-[2px_0_12px_rgba(0,0,0,0.04)] md:flex">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-[#0e4f66] to-[#15364a]">
-                <LocalHospitalOutlinedIcon className="text-white" style={{ fontSize: 20 }} />
-              </div>
-              <div>
-                <h1 className="font-['Fraunces',Georgia,serif] text-lg font-bold leading-tight text-[#0b5f84]">
-                  Lumina
-                </h1>
-                <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-zinc-400">
-                  Sistema Geriatrico
-                </p>
-              </div>
+          {/* Sidebar */}
+          <nav className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col gap-8 overflow-y-auto bg-[var(--color-ash)] px-5 py-6 shadow-[2px_0_16px_rgba(0,0,0,0.18)] md:flex">
+            {/* Logo */}
+            <div className="flex flex-col gap-1">
+              <h1 className="font-['Lora',Georgia,serif] text-2xl font-semibold leading-tight text-[var(--color-champagne)]">
+                Merita
+              </h1>
+              <p className="text-[0.62rem] font-light uppercase tracking-widest text-[var(--color-silk)]/60">
+                Excelencia en el detalle
+              </p>
             </div>
 
+            {/* Nav items */}
             <div className="flex flex-col gap-1.5">
-              <span className="mb-1 px-1 text-[0.68rem] font-bold uppercase tracking-widest text-zinc-400">
+              <span className="mb-1 px-1 text-[0.65rem] font-medium uppercase tracking-widest text-[var(--color-silk)]/40">
                 Modulos
               </span>
               {modules.map((module) => {
@@ -125,25 +205,28 @@ export default function GeriatricoPauApp() {
                     key={module.key}
                     type="button"
                     disabled={!hasAccess}
-                    className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
+                    className={`group flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-left transition-all ${
                       selected
-                        ? "border border-[#0b5f84]/20 bg-linear-to-r from-[#0b5f84]/10 to-[#0b5f84]/4 shadow-sm"
-                        : "border border-transparent hover:border-zinc-200 hover:bg-zinc-50"
-                    } ${!hasAccess ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
+                        ? "border-l-2 border-[var(--color-manana)] bg-[rgba(255,255,255,0.08)]"
+                        : "border-l-2 border-transparent hover:bg-[rgba(255,255,255,0.05)]"
+                    } ${!hasAccess ? "cursor-not-allowed opacity-30" : "cursor-pointer"}`}
                     onClick={() => { if (hasAccess) setActiveModule(module.key); }}
                   >
                     <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                        selected ? "bg-[#0b5f84] text-white" : "bg-zinc-100 text-zinc-500 group-hover:bg-zinc-200"
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] transition-colors ${
+                        selected
+                          ? "text-white"
+                          : "text-[var(--color-silk)]/50 group-hover:text-[var(--color-silk)]/80"
                       }`}
+                      style={selected ? { backgroundColor: "var(--color-manana)" } : {}}
                     >
                       <Icon style={{ fontSize: 18 }} />
                     </span>
                     <span className="flex min-w-0 flex-col">
-                      <span className={`text-sm font-bold leading-tight ${selected ? "text-[#0b5f84]" : "text-zinc-700"}`}>
+                      <span className={`text-sm font-medium leading-tight ${selected ? "text-[var(--color-champagne)]" : "text-[var(--color-silk)]/70"}`}>
                         {module.label}
                       </span>
-                      <span className="truncate text-[0.7rem] leading-snug text-zinc-400">
+                      <span className="truncate text-[0.68rem] leading-snug text-[var(--color-silk)]/40">
                         {hasAccess ? module.subtitle : "Sin acceso"}
                       </span>
                     </span>
@@ -152,43 +235,65 @@ export default function GeriatricoPauApp() {
               })}
             </div>
 
-            <div className="mt-auto flex flex-col gap-3 border-t border-zinc-100 pt-4">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-bold text-zinc-700">{sessionUser}</span>
-                <span className="text-[0.68rem] font-medium uppercase tracking-wider text-zinc-400">
-                  {sessionRole}
-                </span>
+            {/* User footer */}
+            <div className="mt-auto flex flex-col gap-3 border-t border-[rgba(255,255,255,0.08)] pt-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[rgba(255,255,255,0.12)] text-xs font-bold uppercase text-[var(--color-champagne)]">
+                  {sessionUser.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex flex-col gap-0">
+                  <span className="text-xs font-medium text-[var(--color-champagne)]">{sessionUser}</span>
+                  <span className="text-[0.62rem] font-light uppercase tracking-widest text-[var(--color-silk)]/50">
+                    {sessionRole}
+                  </span>
+                </div>
               </div>
-              <Button variant="outline" size="sm" className="w-full" onClick={logout}>
+              <button
+                type="button"
+                onClick={logout}
+                className="w-full rounded-[var(--radius-sm)] border border-[rgba(255,255,255,0.15)] px-3 py-1.5 text-xs font-medium text-[var(--color-silk)]/70 transition-colors hover:border-[rgba(255,255,255,0.3)] hover:text-[var(--color-champagne)]"
+              >
                 Cerrar sesion
-              </Button>
+              </button>
             </div>
           </nav>
 
           <div className="flex min-h-screen flex-1 flex-col md:ml-64">
-            <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-zinc-200/60 bg-white/80 px-6 py-3 backdrop-blur-md md:px-8">
-              <div className="flex items-center gap-2">
-                <Chip color="primary" label={`Sesion: ${sessionUser}`} size="small" />
-                <Chip color="secondary" label={`Rol: ${sessionRole}`} size="small" />
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="hidden text-sm font-medium text-zinc-500 md:inline">
-                  {activeModule ? modules.find((m) => m.key === activeModule)?.label : ""}
-                </span>
-                {sessionRole === "admin" ? (
-                  <Button
-                    variant={editMode ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setEditMode((v) => !v)}
-                    className="gap-1.5"
+            {/* Header */}
+            <header className="sticky top-0 z-10 flex flex-col border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)]/90 backdrop-blur-md">
+              {/* Shift stripe */}
+              <div className="h-[3px] w-full" style={{ backgroundColor: shiftAccent }} />
+              <div className="flex items-center justify-between gap-3 px-6 py-3 md:px-8">
+                <div className="flex items-center gap-2">
+                  <span className="rounded-[var(--radius-full)] bg-[var(--color-surface-alt)] px-3 py-1 text-xs font-medium text-[var(--color-text-secondary)]">
+                    {sessionUser}
+                  </span>
+                  <span
+                    className="rounded-[var(--radius-full)] px-3 py-1 text-xs font-semibold"
+                    style={{ backgroundColor: shiftAccent + "22", color: shiftAccent }}
                   >
-                    {editMode ? (
-                      <><EditOutlinedIcon style={{ fontSize: 16 }} /> Modo edicion</>
-                    ) : (
-                      <><VisibilityOutlinedIcon style={{ fontSize: 16 }} /> Modo lectura</>
-                    )}
-                  </Button>
-                ) : null}
+                    {shiftLabel}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="hidden text-sm font-medium text-[var(--color-text-muted)] md:inline">
+                    {activeModule ? modules.find((m) => m.key === activeModule)?.label : ""}
+                  </span>
+                  {sessionRole === "admin" ? (
+                    <Button
+                      variant={editMode ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setEditMode((v) => !v)}
+                      className="gap-1.5"
+                    >
+                      {editMode ? (
+                        <><EditOutlinedIcon style={{ fontSize: 16 }} /> Modo edicion</>
+                      ) : (
+                        <><VisibilityOutlinedIcon style={{ fontSize: 16 }} /> Modo lectura</>
+                      )}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             </header>
 

@@ -21,11 +21,11 @@ const STATUS_VARIANT: Record<StatusType, "success" | "warning" | "danger"> = {
 };
 
 const TIMELINE_DOT: Record<PatientTimelineEntry["type"], string> = {
-  ingreso: "bg-blue-500",
-  incidente: "bg-red-500",
-  medicacion: "bg-emerald-500",
-  documento: "bg-zinc-400",
-  alta: "bg-purple-500",
+  ingreso: "var(--color-noche)",
+  incidente: "var(--color-alerta)",
+  medicacion: "var(--color-tarde)",
+  documento: "var(--color-silk)",
+  alta: "var(--color-manana)",
 };
 
 interface PatientDetailModalProps {
@@ -73,16 +73,19 @@ export function PatientDetailModal({
     <dialog
       ref={dialogRef}
       onClose={onClose}
-      className="fixed inset-0 z-50 m-0 flex max-h-none max-w-none items-center justify-center border-0 bg-transparent p-4 backdrop:bg-black/50"
+      className="fixed inset-0 z-50 m-0 flex max-h-none max-w-none items-center justify-center border-0 bg-transparent p-4 backdrop:bg-[var(--color-ash)]/60"
       aria-labelledby="patient-detail-title"
     >
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white shadow-xl">
-        <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-zinc-200 bg-white p-6">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[var(--radius-xl)] bg-[var(--color-surface)] shadow-[var(--shadow-modal)]">
+        <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-6">
           <div className="min-w-0 flex-1">
-            <h1 id="patient-detail-title" className="text-2xl font-semibold text-zinc-900">
+            <h1
+              id="patient-detail-title"
+              className="font-['Lora',Georgia,serif] text-2xl font-semibold text-[var(--color-text-primary)]"
+            >
               {patient.fullName}
             </h1>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-zinc-600">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[var(--color-text-secondary)]">
               <span>DNI: {patient.dni}</span>
               <span>Habitacion: {patient.room}</span>
               <Badge variant={STATUS_VARIANT[patient.status]} className="capitalize">
@@ -116,58 +119,56 @@ export function PatientDetailModal({
 
         <main className="space-y-6 p-6">
           <section>
-            <h2 className="mb-3 text-lg font-semibold text-zinc-900">Datos personales</h2>
+            <h2 className="mb-3 font-['Lora',Georgia,serif] text-lg font-semibold text-[var(--color-text-primary)]">Datos personales</h2>
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <dt className="text-xs font-medium uppercase text-zinc-500">Diagnostico</dt>
-                <dd className="text-zinc-900">{patient.diagnosis || "-"}</dd>
+                <dt className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">Diagnostico</dt>
+                <dd className="text-[var(--color-text-primary)]">{patient.diagnosis || "-"}</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium uppercase text-zinc-500">Alergias</dt>
-                <dd className="text-zinc-900">{patient.allergyNotes || "-"}</dd>
+                <dt className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">Alergias</dt>
+                <dd className="text-[var(--color-text-primary)]">{patient.allergyNotes || "-"}</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium uppercase text-zinc-500">Grupo sanguineo</dt>
-                <dd className="text-zinc-900">{patient.bloodType || "-"}</dd>
+                <dt className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">Grupo sanguineo</dt>
+                <dd className="text-[var(--color-text-primary)]">{patient.bloodType || "-"}</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium uppercase text-zinc-500">Obra social</dt>
-                <dd className="text-zinc-900">{patient.obraSocial || "-"}</dd>
+                <dt className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">Obra social</dt>
+                <dd className="text-[var(--color-text-primary)]">{patient.obraSocial || "-"}</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium uppercase text-zinc-500">Fecha de ingreso</dt>
-                <dd className="text-zinc-900">{patient.admissionDate || "-"}</dd>
+                <dt className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">Fecha de ingreso</dt>
+                <dd className="text-[var(--color-text-primary)]">{patient.admissionDate || "-"}</dd>
               </div>
               <div>
-                <dt className="text-xs font-medium uppercase text-zinc-500">Contacto de emergencia</dt>
-                <dd className="text-zinc-900">{patient.emergencyContact || "-"}</dd>
+                <dt className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">Contacto de emergencia</dt>
+                <dd className="text-[var(--color-text-primary)]">{patient.emergencyContact || "-"}</dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="text-xs font-medium uppercase text-zinc-500">Ultimo incidente</dt>
-                <dd className="text-zinc-900">{patient.lastIncident || "-"}</dd>
+                <dt className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">Ultimo incidente</dt>
+                <dd className="text-[var(--color-text-primary)]">{patient.lastIncident || "-"}</dd>
               </div>
             </dl>
           </section>
 
           <section>
-            <h2 className="mb-3 text-lg font-semibold text-zinc-900">Historia clinica</h2>
+            <h2 className="mb-3 font-['Lora',Georgia,serif] text-lg font-semibold text-[var(--color-text-primary)]">Historia clinica</h2>
             {patientTimeline.length === 0 ? (
-              <p className="text-sm text-zinc-500">Sin registros.</p>
+              <p className="text-sm text-[var(--color-text-muted)]">Sin registros.</p>
             ) : (
               <ul className="space-y-4">
                 {patientTimeline.map((entry) => (
                   <li key={entry.id} className="flex gap-3">
                     <span
-                      className={cn(
-                        "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
-                        TIMELINE_DOT[entry.type]
-                      )}
+                      className={cn("mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full")}
+                      style={{ backgroundColor: TIMELINE_DOT[entry.type] }}
                       aria-hidden
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-zinc-900">{entry.title}</p>
-                      <p className="text-sm text-zinc-600">{entry.description}</p>
-                      <p className="mt-1 text-xs text-zinc-500">
+                      <p className="font-medium text-[var(--color-text-primary)]">{entry.title}</p>
+                      <p className="text-sm text-[var(--color-text-secondary)]">{entry.description}</p>
+                      <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                         {formatTimestamp(entry.dateKey + "T00:00:00")}
                       </p>
                     </div>
@@ -178,21 +179,21 @@ export function PatientDetailModal({
           </section>
 
           <section>
-            <h2 className="mb-3 text-lg font-semibold text-zinc-900">Documentacion</h2>
+            <h2 className="mb-3 font-['Lora',Georgia,serif] text-lg font-semibold text-[var(--color-text-primary)]">Documentacion</h2>
             {patientDocs.length === 0 ? (
-              <p className="text-sm text-zinc-500">Sin registros.</p>
+              <p className="text-sm text-[var(--color-text-muted)]">Sin registros.</p>
             ) : (
               <ul className="space-y-2">
                 {patientDocs.map((doc) => (
                   <li
                     key={doc.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-zinc-200 p-3"
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-3"
                   >
                     <div>
-                      <p className="font-medium text-zinc-900">{doc.fileName}</p>
-                      <p className="text-sm text-zinc-500">{doc.category}</p>
+                      <p className="font-medium text-[var(--color-text-primary)]">{doc.fileName}</p>
+                      <p className="text-sm text-[var(--color-text-muted)]">{doc.category}</p>
                     </div>
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-[var(--color-text-muted)]">
                       {formatTimestamp(doc.uploadedAt)}
                     </span>
                   </li>
@@ -202,23 +203,23 @@ export function PatientDetailModal({
           </section>
 
           <section>
-            <h2 className="mb-3 text-lg font-semibold text-zinc-900">Medicacion activa</h2>
+            <h2 className="mb-3 font-['Lora',Georgia,serif] text-lg font-semibold text-[var(--color-text-primary)]">Medicacion activa</h2>
             {patientMeds.length === 0 ? (
-              <p className="text-sm text-zinc-500">Sin registros.</p>
+              <p className="text-sm text-[var(--color-text-muted)]">Sin registros.</p>
             ) : (
               <ul className="space-y-2">
                 {patientMeds.map((med) => (
                   <li
                     key={med.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-zinc-200 p-3"
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-3"
                   >
                     <div>
-                      <p className="font-medium text-zinc-900">{med.medication}</p>
-                      <p className="text-sm text-zinc-500">
+                      <p className="font-medium text-[var(--color-text-primary)]">{med.medication}</p>
+                      <p className="text-sm text-[var(--color-text-muted)]">
                         {med.dose} - {med.category}
                       </p>
                     </div>
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-[var(--color-text-muted)]">
                       {formatTimestamp(med.receivedAt)}
                     </span>
                   </li>
@@ -228,26 +229,30 @@ export function PatientDetailModal({
           </section>
 
           <section>
-            <h2 className="mb-3 text-lg font-semibold text-zinc-900">Accidentes</h2>
+            <h2 className="mb-3 font-['Lora',Georgia,serif] text-lg font-semibold text-[var(--color-text-primary)]">Accidentes</h2>
             {patientIncidents.length === 0 ? (
-              <p className="text-sm text-zinc-500">Sin registros.</p>
+              <p className="text-sm text-[var(--color-text-muted)]">Sin registros.</p>
             ) : (
               <ul className="space-y-2">
                 {patientIncidents.map((inc) => (
                   <li
                     key={inc.id}
-                    className="rounded-md border border-zinc-200 p-3"
+                    className="rounded-[var(--radius-md)] border p-3"
+                    style={{
+                      backgroundColor: "var(--color-alerta-tint)",
+                      borderColor: "rgba(195,106,89,0.20)",
+                    }}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <Badge variant={getSeverityVariant(inc.severity)}>
                         {inc.severity}
                       </Badge>
-                      <span className="text-xs text-zinc-500">
+                      <span className="text-xs text-[var(--color-text-muted)]">
                         {formatTimestamp(inc.dateKey + "T00:00:00")} - {inc.location}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm text-zinc-900">{inc.details}</p>
-                    <p className="mt-1 text-xs text-zinc-500">Reportado por: {inc.reportedBy}</p>
+                    <p className="mt-2 text-sm text-[var(--color-text-primary)]">{inc.details}</p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">Reportado por: {inc.reportedBy}</p>
                   </li>
                 ))}
               </ul>

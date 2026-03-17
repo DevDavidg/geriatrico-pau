@@ -16,6 +16,7 @@ import {
 } from "./mock-data";
 import { formatTimestamp } from "./helpers";
 import { VanillaCalendar } from "./VanillaCalendar";
+import { SHIFT_BADGE_VARIANT } from "../../lib/shift-colors";
 import type { HandoverNote, NurseActivity, UserCalendarMap, UserNoteMap } from "./types";
 
 interface NursesModuleProps {
@@ -24,10 +25,10 @@ interface NursesModuleProps {
 }
 
 const activityDotColor: Record<NurseActivity["type"], string> = {
-  franco: "bg-emerald-500",
-  guardia: "bg-sky-500",
-  incidente: "bg-red-500",
-  nota: "bg-zinc-400",
+  franco: "bg-[var(--color-tarde)]",
+  guardia: "bg-[var(--color-manana)]",
+  incidente: "bg-[var(--color-alerta)]",
+  nota: "bg-[var(--color-silk)]",
 };
 
 export function NursesModule({ sessionRole, editMode }: Readonly<NursesModuleProps>) {
@@ -118,28 +119,22 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
 
   return (
     <section className="module-content-grid">
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant={step === 0 ? "default" : "outline"}
-          size="sm"
-          onClick={() => setStep(0)}
-        >
-          1 · Perfil de enfermera
-        </Button>
-        <Button
-          variant={step === 1 ? "default" : "outline"}
-          size="sm"
-          onClick={() => setStep(1)}
-        >
-          2 · Calendario de francos
-        </Button>
-        <Button
-          variant={step === 2 ? "default" : "outline"}
-          size="sm"
-          onClick={() => setStep(2)}
-        >
-          3 · Pase de guardia
-        </Button>
+      {/* Step pill switcher */}
+      <div className="flex gap-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-1">
+        {(["1 · Perfil de enfermera", "2 · Calendario de francos", "3 · Pase de guardia"] as const).map((label, idx) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => setStep(idx as 0 | 1 | 2)}
+            className={`flex-1 rounded-[var(--radius-md)] px-3 py-1.5 text-sm font-medium transition-all ${
+              step === idx
+                ? "bg-[var(--color-surface)] shadow-[var(--shadow-card)] text-[var(--color-text-primary)]"
+                : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {step === 0 && (
@@ -166,38 +161,40 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
             </TextField>
 
             {selectedNurse && (
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+              <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-4">
                 <div className="flex items-start gap-4">
                   <div
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold uppercase text-white"
                     style={{ backgroundColor: selectedNurse.color }}
                   >
                     {selectedNurse.initials}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-lg font-bold text-zinc-800">{selectedNurse.name}</span>
-                      <Badge variant="outline">{selectedNurse.shift}</Badge>
-                      <Badge variant="default">{selectedNurse.specialty}</Badge>
+                      <span className="text-lg font-semibold text-[var(--color-text-primary)]">{selectedNurse.name}</span>
+                      <Badge variant={SHIFT_BADGE_VARIANT[selectedNurse.shift as keyof typeof SHIFT_BADGE_VARIANT] as "shift_manana" | "shift_tarde" | "shift_noche"}>
+                        {selectedNurse.shift}
+                      </Badge>
+                      <Badge variant="secondary">{selectedNurse.specialty}</Badge>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm md:grid-cols-3">
-                      <span className="text-zinc-600">
-                        Francos: <strong className="text-zinc-800">{totalFrancos}</strong>
+                      <span className="text-[var(--color-text-secondary)]">
+                        Francos: <strong className="text-[var(--color-text-primary)]">{totalFrancos}</strong>
                       </span>
-                      <span className="text-zinc-600">
-                        Notas pase: <strong className="text-zinc-800">{totalHandoverNotes}</strong>
+                      <span className="text-[var(--color-text-secondary)]">
+                        Notas pase: <strong className="text-[var(--color-text-primary)]">{totalHandoverNotes}</strong>
                       </span>
-                      <span className="text-zinc-600">
-                        Especialidad: <strong className="text-zinc-800">{selectedNurse.specialty}</strong>
+                      <span className="text-[var(--color-text-secondary)]">
+                        Especialidad: <strong className="text-[var(--color-text-primary)]">{selectedNurse.specialty}</strong>
                       </span>
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-600">
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--color-text-secondary)]">
                       <span>{selectedNurse.phone}</span>
                       <span>{selectedNurse.email}</span>
                       <span>Ingreso: {selectedNurse.startDate}</span>
                     </div>
                     <div className="mt-4 space-y-2">
-                      <span className="text-sm font-bold text-zinc-700">Actividad reciente</span>
+                      <span className="font-['Lora',Georgia,serif] text-sm font-semibold text-[var(--color-text-primary)]">Actividad reciente</span>
                       <ul className="space-y-2">
                         {recentActivities.map((act) => (
                           <li key={act.id} className="flex items-start gap-2">
@@ -205,8 +202,8 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
                               className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${activityDotColor[act.type]}`}
                             />
                             <div>
-                              <p className="text-sm text-zinc-700">{act.description}</p>
-                              <p className="text-xs text-zinc-500">{act.dateKey}</p>
+                              <p className="text-sm text-[var(--color-text-primary)]">{act.description}</p>
+                              <p className="text-xs text-[var(--color-text-muted)]">{act.dateKey}</p>
                             </div>
                           </li>
                         ))}
@@ -242,12 +239,12 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
             )}
 
             {sessionRole === "admin" && (
-              <p className="text-sm text-zinc-500">Vista de administrador</p>
+              <p className="text-sm text-[var(--color-text-muted)]">Vista de administrador</p>
             )}
 
             <Divider />
-            <p className="text-sm text-zinc-500">
-              Enfermera activa: <strong className="text-zinc-700">{activeNurse.name}</strong> (
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Enfermera activa: <strong className="text-[var(--color-text-primary)]">{activeNurse.name}</strong> (
               {activeNurse.shift}) · Francos: {(nurseDaysOff[activeNurseId] ?? []).length}
             </p>
           </CardContent>
@@ -301,16 +298,16 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
                 return (
                   <div key={note.id} className="flex gap-3">
                     <div
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                      style={{ backgroundColor: nurse?.color ?? "#6b7280" }}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold uppercase text-white"
+                      style={{ backgroundColor: nurse?.color ?? "#9B9B9B" }}
                     >
                       {nurse?.initials ?? "?"}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <span className="text-sm font-bold text-zinc-800">{note.author}</span>
-                      <p className="text-xs text-zinc-500">{formatTimestamp(note.timestamp)}</p>
-                      <div className="mt-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
-                        <p className="text-sm text-zinc-700">{note.message}</p>
+                      <span className="text-sm font-semibold text-[var(--color-text-primary)]">{note.author}</span>
+                      <p className="text-xs text-[var(--color-text-muted)]">{formatTimestamp(note.timestamp)}</p>
+                      <div className="mt-1 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] px-3 py-2">
+                        <p className="text-sm text-[var(--color-text-primary)]">{note.message}</p>
                       </div>
                     </div>
                   </div>

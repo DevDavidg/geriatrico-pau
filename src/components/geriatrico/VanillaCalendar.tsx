@@ -59,7 +59,7 @@ export function VanillaCalendar({
           >
             Mes anterior
           </Button>
-          <span className="text-sm font-bold capitalize text-zinc-700">{monthLabel}</span>
+          <span className="font-['Lora',Georgia,serif] text-sm font-semibold capitalize text-[var(--color-text-primary)]">{monthLabel}</span>
           <Button
             variant="outline"
             size="sm"
@@ -102,10 +102,12 @@ export function VanillaCalendar({
           })}
         </div>
 
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-          <span className="text-sm font-bold capitalize text-zinc-700">{formatDateLong(focusedDate)}</span>
+        <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-4">
+          <span className="font-['Lora',Georgia,serif] text-sm font-semibold capitalize text-[var(--color-text-primary)]">
+            {formatDateLong(focusedDate)}
+          </span>
           <Textarea
-            className="mt-3 bg-white"
+            className="mt-3 bg-[var(--color-surface)]"
             disabled={readonly}
             placeholder="Anotaciones del dia seleccionado..."
             value={draftNote}

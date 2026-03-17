@@ -34,17 +34,17 @@ import {
   patientTimeline,
 } from "./mock-data";
 import { PatientDetailModal } from "./PatientDetailModal";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
 import {
+  Badge,
+  Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
+  Input,
   CardTitle,
-} from "../ui/card";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
+  Textarea,
+} from "../ui";
 
 interface GeriatricoModuleProps {
   readonly sessionRole: UserRole | null;

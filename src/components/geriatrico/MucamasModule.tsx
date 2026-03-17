@@ -13,11 +13,8 @@ import {
   TextField,
 } from "@mui/material";
 
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Textarea } from "../ui/textarea";
-import { formatDateLong, toDateKey } from "./helpers";
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Textarea } from "../ui";
+import { formatDateLong, toDateKey, toggleDateKey } from "./helpers";
 import {
   firstPatientSeed,
   initialIncidents,
@@ -92,8 +89,7 @@ export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Re
     setOverlapError("");
     setDaysOffByMaid((previous) => {
       const current = previous[activeMaidId] ?? [];
-      const alreadyPicked = current.includes(dateKey);
-      const next = alreadyPicked ? current.filter((item) => item !== dateKey) : [...current, dateKey].sort((a, b) => a.localeCompare(b));
+      const next = toggleDateKey(current, dateKey);
       return { ...previous, [activeMaidId]: next };
     });
   }

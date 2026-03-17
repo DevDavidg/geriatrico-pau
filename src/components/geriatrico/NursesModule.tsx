@@ -14,6 +14,7 @@ import {
   nurseActivities,
   nurseRoster,
 } from "./mock-data";
+import { SHIFT_BADGE_VARIANT } from "../../lib/shift-colors";
 import { formatTimestamp } from "./helpers";
 import { VanillaCalendar } from "./VanillaCalendar";
 import type { HandoverNote, NurseActivity, UserCalendarMap, UserNoteMap } from "./types";

@@ -115,3 +115,18 @@ body {
   color: var(--color-alerta);
   background: var(--color-alerta-tint);
 }
+
+@keyframes module-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.module-slide-pane {
+  animation: module-slide-in 260ms ease-out;
+}

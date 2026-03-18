@@ -163,27 +163,15 @@ export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Re
     }));
   }
 
-  return (
-    <section className="module-content-grid">
-      {/* Step pill switcher */}
-      <div className="flex gap-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-1">
-        {(["1 · Calendario y francos", "2 · Cronograma diario", "3 · Accidentes"] as const).map((label, idx) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => setStep(idx as 0 | 1 | 2)}
-            className={`flex-1 rounded-[var(--radius-md)] px-3 py-1.5 text-sm font-medium transition-all ${
-              step === idx
-                ? "bg-[var(--color-surface)] shadow-[var(--shadow-card)] text-[var(--color-text-primary)]"
-                : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+  const stepLabels = [
+    "1 · Calendario y francos",
+    "2 · Cronograma diario",
+    "3 · Accidentes",
+  ] as const;
 
-      {step === 0 ? (
+  const stepContent = (() => {
+    if (step === 0) {
+      return (
         <div className="flex flex-col gap-5">
           <Card>
             <CardHeader>
@@ -238,9 +226,11 @@ export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Re
             onSaveNote={saveDateNote}
           />
         </div>
-      ) : null}
+      );
+    }
 
-      {step === 1 ? (
+    if (step === 1) {
+      return (
         <Card>
           <CardHeader>
             <CardTitle>Cronograma diario</CardTitle>
@@ -369,146 +359,169 @@ export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Re
             </div>
           </CardContent>
         </Card>
-      ) : null}
+      );
+    }
 
-      {step === 2 ? (
-        <>
-          <Card>
-            <CardHeader>
-              <CardTitle>Registrar accidente</CardTitle>
-              <CardDescription>
-                Registro estructurado de accidentes dentro o fuera de la residencia.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <TextField
-                  type="date"
-                  label="Fecha"
-                  InputLabelProps={{ shrink: true }}
-                  value={incidentForm.dateKey}
-                  disabled={readOnly}
-                  onChange={(event) => setIncidentForm((previous) => ({ ...previous, dateKey: event.target.value }))}
-                  fullWidth
-                />
-                <TextField
-                  select
-                  label="Ubicacion"
-                  value={incidentForm.location}
-                  disabled={readOnly}
-                  onChange={(event) =>
-                    setIncidentForm((previous) => ({
-                      ...previous,
-                      location: event.target.value as "Dentro" | "Fuera",
-                    }))
-                  }
-                  fullWidth
-                >
-                  <MenuItem value="Dentro">Dentro de la residencia</MenuItem>
-                  <MenuItem value="Fuera">Fuera de la residencia</MenuItem>
-                </TextField>
-                <TextField
-                  label="Reportado por"
-                  value={incidentForm.reportedBy}
-                  disabled={readOnly}
-                  onChange={(event) => setIncidentForm((previous) => ({ ...previous, reportedBy: event.target.value }))}
-                  fullWidth
-                />
-                <TextField
-                  select
-                  label="Severidad"
-                  value={incidentForm.severity}
-                  disabled={readOnly}
-                  onChange={(event) =>
-                    setIncidentForm((previous) => ({
-                      ...previous,
-                      severity: event.target.value as "Baja" | "Media" | "Alta",
-                    }))
-                  }
-                  fullWidth
-                >
-                  <MenuItem value="Baja">Baja</MenuItem>
-                  <MenuItem value="Media">Media</MenuItem>
-                  <MenuItem value="Alta">Alta</MenuItem>
-                </TextField>
-                <TextField
-                  select
-                  label="Paciente (opcional)"
-                  value={incidentForm.patientId}
-                  disabled={readOnly}
-                  onChange={(event) =>
-                    setIncidentForm((previous) => ({
-                      ...previous,
-                      patientId: event.target.value,
-                    }))
-                  }
-                  fullWidth
-                >
-                  <MenuItem value="">Ninguno</MenuItem>
-                  {firstPatientSeed.map((patient) => (
-                    <MenuItem key={patient.id} value={patient.id}>
-                      {patient.fullName}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </div>
-              <Textarea
-                placeholder="Descripcion del accidente..."
-                value={incidentForm.details}
+    return (
+      <>
+        <Card>
+          <CardHeader>
+            <CardTitle>Registrar accidente</CardTitle>
+            <CardDescription>
+              Registro estructurado de accidentes dentro o fuera de la residencia.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              <TextField
+                type="date"
+                label="Fecha"
+                InputLabelProps={{ shrink: true }}
+                value={incidentForm.dateKey}
                 disabled={readOnly}
-                onChange={(event) => setIncidentForm((previous) => ({ ...previous, details: event.target.value }))}
+                onChange={(event) => setIncidentForm((previous) => ({ ...previous, dateKey: event.target.value }))}
+                fullWidth
               />
-              <Button variant="destructive" disabled={readOnly} onClick={addIncident}>
-                Registrar accidente
-              </Button>
-              <div className="space-y-2">
-                {incidents.map((incident) => (
-                  <div
-                    key={incident.id}
-                    className="rounded-[var(--radius-lg)] p-4"
-                    style={{
-                      backgroundColor: "var(--color-alerta-tint)",
-                      border: "1px solid rgba(195,106,89,0.20)",
-                    }}
-                  >
-                    <span className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      {incident.location} · Severidad {incident.severity}
-                    </span>
-                    <p className="text-xs text-[var(--color-text-muted)]">
-                      {incident.dateKey} · {incident.reportedBy}
-                    </p>
-                    {incident.patientName && incident.patientId ? (
-                      <button
-                        type="button"
-                        className="mt-1 block cursor-pointer font-semibold text-[var(--color-noche)] underline"
-                        onClick={() => onNavigateToPatient(incident.patientId ?? "")}
-                      >
-                        {incident.patientName}
-                      </button>
-                    ) : null}
-                    <p className="mt-2 text-sm text-[var(--color-text-primary)]">{incident.details}</p>
-                  </div>
+              <TextField
+                select
+                label="Ubicacion"
+                value={incidentForm.location}
+                disabled={readOnly}
+                onChange={(event) =>
+                  setIncidentForm((previous) => ({
+                    ...previous,
+                    location: event.target.value as "Dentro" | "Fuera",
+                  }))
+                }
+                fullWidth
+              >
+                <MenuItem value="Dentro">Dentro de la residencia</MenuItem>
+                <MenuItem value="Fuera">Fuera de la residencia</MenuItem>
+              </TextField>
+              <TextField
+                label="Reportado por"
+                value={incidentForm.reportedBy}
+                disabled={readOnly}
+                onChange={(event) => setIncidentForm((previous) => ({ ...previous, reportedBy: event.target.value }))}
+                fullWidth
+              />
+              <TextField
+                select
+                label="Severidad"
+                value={incidentForm.severity}
+                disabled={readOnly}
+                onChange={(event) =>
+                  setIncidentForm((previous) => ({
+                    ...previous,
+                    severity: event.target.value as "Baja" | "Media" | "Alta",
+                  }))
+                }
+                fullWidth
+              >
+                <MenuItem value="Baja">Baja</MenuItem>
+                <MenuItem value="Media">Media</MenuItem>
+                <MenuItem value="Alta">Alta</MenuItem>
+              </TextField>
+              <TextField
+                select
+                label="Paciente (opcional)"
+                value={incidentForm.patientId}
+                disabled={readOnly}
+                onChange={(event) =>
+                  setIncidentForm((previous) => ({
+                    ...previous,
+                    patientId: event.target.value,
+                  }))
+                }
+                fullWidth
+              >
+                <MenuItem value="">Ninguno</MenuItem>
+                {firstPatientSeed.map((patient) => (
+                  <MenuItem key={patient.id} value={patient.id}>
+                    {patient.fullName}
+                  </MenuItem>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* FAB — fixed bottom-right */}
-          {!readOnly && (
-            <Button
-              variant="accent"
-              size="fab"
-              className="fixed bottom-6 right-6 z-30 shadow-[var(--shadow-modal)]"
-              onClick={addIncident}
-              title="Registrar accidente rápido"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
+              </TextField>
+            </div>
+            <Textarea
+              placeholder="Descripcion del accidente..."
+              value={incidentForm.details}
+              disabled={readOnly}
+              onChange={(event) => setIncidentForm((previous) => ({ ...previous, details: event.target.value }))}
+            />
+            <Button variant="destructive" disabled={readOnly} onClick={addIncident}>
+              Registrar accidente
             </Button>
-          )}
-        </>
-      ) : null}
+            <div className="space-y-2">
+              {incidents.map((incident) => (
+                <div
+                  key={incident.id}
+                  className="rounded-[var(--radius-lg)] p-4"
+                  style={{
+                    backgroundColor: "var(--color-alerta-tint)",
+                    border: "1px solid rgba(195,106,89,0.20)",
+                  }}
+                >
+                  <span className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {incident.location} · Severidad {incident.severity}
+                  </span>
+                  <p className="text-xs text-[var(--color-text-muted)]">
+                    {incident.dateKey} · {incident.reportedBy}
+                  </p>
+                  {incident.patientName && incident.patientId ? (
+                    <button
+                      type="button"
+                      className="mt-1 block cursor-pointer font-semibold text-[var(--color-noche)] underline"
+                      onClick={() => onNavigateToPatient(incident.patientId ?? "")}
+                    >
+                      {incident.patientName}
+                    </button>
+                  ) : null}
+                  <p className="mt-2 text-sm text-[var(--color-text-primary)]">{incident.details}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {!readOnly && (
+          <Button
+            variant="accent"
+            size="fab"
+            className="fixed bottom-6 right-6 z-30 shadow-[var(--shadow-modal)]"
+            onClick={addIncident}
+            title="Registrar accidente rápido"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </Button>
+        )}
+      </>
+    );
+  })();
+
+  return (
+    <section className="module-content-grid">
+      <div className="flex gap-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-1">
+        {stepLabels.map((label, idx) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => setStep(idx as 0 | 1 | 2)}
+            className={`flex-1 rounded-[var(--radius-md)] px-3 py-1.5 text-sm font-medium transition-all ${
+              step === idx
+                ? "bg-[var(--color-surface)] shadow-[var(--shadow-card)] text-[var(--color-text-primary)]"
+                : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div key={step} className="module-slide-pane">
+        {stepContent}
+      </div>
     </section>
   );
 }

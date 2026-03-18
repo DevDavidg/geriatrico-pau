@@ -17,7 +17,7 @@ import {
 import { SHIFT_BADGE_VARIANT } from "../../lib/shift-colors";
 import { formatTimestamp } from "./helpers";
 import { VanillaCalendar } from "./VanillaCalendar";
-import type { HandoverNote, NurseActivity, UserCalendarMap, UserNoteMap } from "./types";
+import type { HandoverNote, NurseActivity, ShiftType, UserCalendarMap, UserNoteMap } from "./types";
 
 interface NursesModuleProps {
   readonly sessionRole: "admin" | "enfermeras" | "mucamas" | null;
@@ -25,11 +25,27 @@ interface NursesModuleProps {
 }
 
 const activityDotColor: Record<NurseActivity["type"], string> = {
-  franco: "bg-[var(--color-tarde)]",
-  guardia: "bg-[var(--color-manana)]",
-  incidente: "bg-[var(--color-alerta)]",
-  nota: "bg-[var(--color-silk)]",
+  franco: "bg-(--color-tarde)",
+  guardia: "bg-(--color-manana)",
+  incidente: "bg-(--color-alerta)",
+  nota: "bg-(--color-silk)",
 };
+
+const stepLabels = [
+  "1 · Perfil de enfermera",
+  "2 · Calendario de francos",
+  "3 · Pase de guardia",
+] as const;
+
+function createNoteId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? `note-${crypto.randomUUID()}`
+    : `note-${Date.now()}`;
+}
+
+function getShiftBadgeVariant(shift: ShiftType): "shift_manana" | "shift_tarde" | "shift_noche" {
+  return SHIFT_BADGE_VARIANT[shift];
+}
 
 export function NursesModule({ sessionRole, editMode }: Readonly<NursesModuleProps>) {
   const readOnly = sessionRole === "admin" && !editMode;
@@ -56,11 +72,7 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
   const totalHandoverNotes = handoverNotes.filter((n) => n.nurseId === selectedNurseId).length;
   const recentActivities = nurseActivities
     .filter((a) => a.nurseId === selectedNurseId)
-    .sort((a, b) => {
-      const keyA = String(a.dateKey);
-      const keyB = String(b.dateKey);
-      return keyB.localeCompare(keyA);
-    })
+    .sort((a, b) => String(b.dateKey).localeCompare(String(a.dateKey)))
     .slice(0, 5);
   const displayMessages = [...handoverNotes].reverse();
   const calendarReadOnly =
@@ -87,7 +99,9 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
     setNurseDaysOff((prev) => {
       const current = prev[sessionNurseId] ?? [];
       const exists = current.includes(dateKey);
-      const next = exists ? current.filter((d) => d !== dateKey) : [...current, dateKey].sort();
+      const next = exists
+        ? current.filter((d) => d !== dateKey)
+        : [...current, dateKey].sort((a, b) => a.localeCompare(b));
       return { ...prev, [sessionNurseId]: next };
     });
   }
@@ -107,7 +121,7 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
     if (!handoverInput.trim() || !sessionNurseId || !canPostHandover) return;
     const nurse = nurseRoster.find((n) => n.id === sessionNurseId);
     const next: HandoverNote = {
-      id: `note-${Date.now()}`,
+      id: createNoteId(),
       nurseId: sessionNurseId,
       timestamp: new Date().toISOString(),
       author: nurse?.name ?? "Enfermera",
@@ -117,27 +131,9 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
     setHandoverInput("");
   }
 
-  return (
-    <section className="module-content-grid">
-      {/* Step pill switcher */}
-      <div className="flex gap-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-1">
-        {(["1 · Perfil de enfermera", "2 · Calendario de francos", "3 · Pase de guardia"] as const).map((label, idx) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => setStep(idx as 0 | 1 | 2)}
-            className={`flex-1 rounded-[var(--radius-md)] px-3 py-1.5 text-sm font-medium transition-all ${
-              step === idx
-                ? "bg-[var(--color-surface)] shadow-[var(--shadow-card)] text-[var(--color-text-primary)]"
-                : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {step === 0 && (
+  const stepContent = (() => {
+    if (step === 0) {
+      return (
         <Card>
           <CardHeader>
             <CardTitle>Perfil de Enfermera</CardTitle>
@@ -161,7 +157,7 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
             </TextField>
 
             {selectedNurse && (
-              <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-4">
+              <div className="rounded-lg border border-(--color-border-subtle) bg-(--color-surface-alt) p-4">
                 <div className="flex items-start gap-4">
                   <div
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold uppercase text-white"
@@ -171,30 +167,30 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-lg font-semibold text-[var(--color-text-primary)]">{selectedNurse.name}</span>
-                      <Badge variant={SHIFT_BADGE_VARIANT[selectedNurse.shift as keyof typeof SHIFT_BADGE_VARIANT] as "shift_manana" | "shift_tarde" | "shift_noche"}>
+                      <span className="text-lg font-semibold text-(--color-text-primary)">{selectedNurse.name}</span>
+                      <Badge variant={getShiftBadgeVariant(selectedNurse.shift)}>
                         {selectedNurse.shift}
                       </Badge>
                       <Badge variant="secondary">{selectedNurse.specialty}</Badge>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm md:grid-cols-3">
-                      <span className="text-[var(--color-text-secondary)]">
-                        Francos: <strong className="text-[var(--color-text-primary)]">{totalFrancos}</strong>
+                      <span className="text-(--color-text-secondary)">
+                        Francos: <strong className="text-(--color-text-primary)">{totalFrancos}</strong>
                       </span>
-                      <span className="text-[var(--color-text-secondary)]">
-                        Notas pase: <strong className="text-[var(--color-text-primary)]">{totalHandoverNotes}</strong>
+                      <span className="text-(--color-text-secondary)">
+                        Notas pase: <strong className="text-(--color-text-primary)">{totalHandoverNotes}</strong>
                       </span>
-                      <span className="text-[var(--color-text-secondary)]">
-                        Especialidad: <strong className="text-[var(--color-text-primary)]">{selectedNurse.specialty}</strong>
+                      <span className="text-(--color-text-secondary)">
+                        Especialidad: <strong className="text-(--color-text-primary)">{selectedNurse.specialty}</strong>
                       </span>
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--color-text-secondary)]">
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-(--color-text-secondary)">
                       <span>{selectedNurse.phone}</span>
                       <span>{selectedNurse.email}</span>
                       <span>Ingreso: {selectedNurse.startDate}</span>
                     </div>
                     <div className="mt-4 space-y-2">
-                      <span className="font-['Lora',Georgia,serif] text-sm font-semibold text-[var(--color-text-primary)]">Actividad reciente</span>
+                      <span className="font-['Lora',Georgia,serif] text-sm font-semibold text-(--color-text-primary)">Actividad reciente</span>
                       <ul className="space-y-2">
                         {recentActivities.map((act) => (
                           <li key={act.id} className="flex items-start gap-2">
@@ -202,8 +198,8 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
                               className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${activityDotColor[act.type]}`}
                             />
                             <div>
-                              <p className="text-sm text-[var(--color-text-primary)]">{act.description}</p>
-                              <p className="text-xs text-[var(--color-text-muted)]">{act.dateKey}</p>
+                              <p className="text-sm text-(--color-text-primary)">{act.description}</p>
+                              <p className="text-xs text-(--color-text-muted)">{act.dateKey}</p>
                             </div>
                           </li>
                         ))}
@@ -239,19 +235,21 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
             )}
 
             {sessionRole === "admin" && (
-              <p className="text-sm text-[var(--color-text-muted)]">Vista de administrador</p>
+              <p className="text-sm text-(--color-text-muted)">Vista de administrador</p>
             )}
 
             <Divider />
-            <p className="text-sm text-[var(--color-text-muted)]">
-              Enfermera activa: <strong className="text-[var(--color-text-primary)]">{activeNurse.name}</strong> (
+            <p className="text-sm text-(--color-text-muted)">
+              Enfermera activa: <strong className="text-(--color-text-primary)">{activeNurse.name}</strong> (
               {activeNurse.shift}) · Francos: {(nurseDaysOff[activeNurseId] ?? []).length}
             </p>
           </CardContent>
         </Card>
-      )}
+      );
+    }
 
-      {step === 1 && (
+    if (step === 1) {
+      return (
         <div className="space-y-4">
           {sessionRole === "admin" && (
             <TextField
@@ -280,58 +278,83 @@ export function NursesModule({ sessionRole, editMode }: Readonly<NursesModulePro
             onSaveNote={saveCalendarNote}
           />
         </div>
-      )}
+      );
+    }
 
-      {step === 2 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Pase de guardia</CardTitle>
-            <CardDescription>
-              Registro cronologico digital de situaciones clinicas, accidentes y avisos a familiares.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isPending && <LinearProgress />}
-            <div className="flex flex-col gap-3">
-              {displayMessages.map((note) => {
-                const nurse = nurseRoster.find((n) => n.id === note.nurseId);
-                return (
-                  <div key={note.id} className="flex gap-3">
-                    <div
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold uppercase text-white"
-                      style={{ backgroundColor: nurse?.color ?? "#9B9B9B" }}
-                    >
-                      {nurse?.initials ?? "?"}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-sm font-semibold text-[var(--color-text-primary)]">{note.author}</span>
-                      <p className="text-xs text-[var(--color-text-muted)]">{formatTimestamp(note.timestamp)}</p>
-                      <div className="mt-1 rounded-[var(--radius-md)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] px-3 py-2">
-                        <p className="text-sm text-[var(--color-text-primary)]">{note.message}</p>
-                      </div>
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Pase de guardia</CardTitle>
+          <CardDescription>
+            Registro cronologico digital de situaciones clinicas, accidentes y avisos a familiares.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isPending && <LinearProgress />}
+          <div className="flex flex-col gap-3">
+            {displayMessages.map((note) => {
+              const nurse = nurseRoster.find((n) => n.id === note.nurseId);
+              return (
+                <div key={note.id} className="flex gap-3">
+                  <div
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold uppercase text-white"
+                    style={{ backgroundColor: nurse?.color ?? "#9B9B9B" }}
+                  >
+                    {nurse?.initials ?? "?"}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm font-semibold text-(--color-text-primary)">{note.author}</span>
+                    <p className="text-xs text-(--color-text-muted)">{formatTimestamp(note.timestamp)}</p>
+                    <div className="mt-1 rounded-md border border-(--color-border-subtle) bg-(--color-surface-alt) px-3 py-2">
+                      <p className="text-sm text-(--color-text-primary)">{note.message}</p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-            <div className="flex gap-2">
-              <Textarea
-                placeholder="Escribi una novedad de guardia..."
-                value={handoverInput}
-                disabled={!canPostHandover}
-                onChange={(e) => setHandoverInput(e.target.value)}
-              />
-              <Button
-                disabled={!canPostHandover || !handoverInput.trim()}
-                onClick={addHandoverNote}
-              >
-                <AssignmentTurnedInOutlinedIcon fontSize="small" />
-                Enviar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex gap-2">
+            <Textarea
+              placeholder="Escribi una novedad de guardia..."
+              value={handoverInput}
+              disabled={!canPostHandover}
+              onChange={(e) => setHandoverInput(e.target.value)}
+            />
+            <Button
+              disabled={!canPostHandover || !handoverInput.trim()}
+              onClick={addHandoverNote}
+            >
+              <AssignmentTurnedInOutlinedIcon fontSize="small" />
+              Enviar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  })();
+
+  return (
+    <section className="module-content-grid">
+      <div className="flex gap-0 rounded-lg border border-(--color-border-subtle) bg-(--color-surface-alt) p-1">
+        {stepLabels.map((label, idx) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => setStep(idx as 0 | 1 | 2)}
+            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
+              step === idx
+                ? "bg-(--color-surface) shadow-(--shadow-card) text-(--color-text-primary)"
+                : "text-(--color-text-muted) hover:text-(--color-text-secondary)"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div key={step} className="module-slide-pane">
+        {stepContent}
+      </div>
     </section>
   );
 }

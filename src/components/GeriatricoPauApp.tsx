@@ -298,25 +298,27 @@ export default function GeriatricoPauApp() {
             </header>
 
             <main className="flex-1 p-4 md:p-8">
-              {activeModule === "enfermeras" ? (
-                <NursesModule sessionRole={sessionRole} editMode={editMode} />
-              ) : null}
-              {activeModule === "geriatrico" ? (
-                <GeriatricoModule
-                  sessionRole={sessionRole}
-                  editMode={editMode}
-                  patientDetailId={patientDetailId}
-                  onOpenPatientDetail={setPatientDetailId}
-                  onClosePatientDetail={() => setPatientDetailId(null)}
-                />
-              ) : null}
-              {activeModule === "mucamas" ? (
-                <MucamasModule
-                  sessionRole={sessionRole}
-                  editMode={editMode}
-                  onNavigateToPatient={navigateToPatient}
-                />
-              ) : null}
+              <div key={activeModule ?? "none"} className="module-slide-pane">
+                {activeModule === "enfermeras" ? (
+                  <NursesModule sessionRole={sessionRole} editMode={editMode} />
+                ) : null}
+                {activeModule === "geriatrico" ? (
+                  <GeriatricoModule
+                    sessionRole={sessionRole}
+                    editMode={editMode}
+                    patientDetailId={patientDetailId}
+                    onOpenPatientDetail={setPatientDetailId}
+                    onClosePatientDetail={() => setPatientDetailId(null)}
+                  />
+                ) : null}
+                {activeModule === "mucamas" ? (
+                  <MucamasModule
+                    sessionRole={sessionRole}
+                    editMode={editMode}
+                    onNavigateToPatient={navigateToPatient}
+                  />
+                ) : null}
+              </div>
             </main>
           </div>
         </div>

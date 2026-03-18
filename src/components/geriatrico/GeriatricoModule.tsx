@@ -243,9 +243,13 @@ export function GeriatricoModule({
     <section className="module-content-grid">
       {/* Step pill switcher */}
       <div className="flex gap-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-1">
-        {(["1 · Alta de paciente", "2 · Documentacion y farmacia", "3 · Insumos y recepcion"] as const).map((label, idx) => (
+        {([
+          { short: "1", full: "1 · Alta de paciente" },
+          { short: "2", full: "2 · Documentacion y farmacia" },
+          { short: "3", full: "3 · Insumos y recepcion" },
+        ] as const).map(({ short, full }, idx) => (
           <button
-            key={label}
+            key={full}
             type="button"
             onClick={() => setStep(idx as 0 | 1 | 2)}
             className={`flex-1 rounded-[var(--radius-md)] px-3 py-1.5 text-sm font-medium transition-all ${
@@ -254,7 +258,8 @@ export function GeriatricoModule({
                 : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
             }`}
           >
-            {label}
+            <span className="md:hidden">{short}</span>
+            <span className="hidden md:inline">{full}</span>
           </button>
         ))}
       </div>
@@ -338,15 +343,15 @@ export function GeriatricoModule({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <TableContainer className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)]">
+            <TableContainer className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)]">
               <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell>Paciente</TableCell>
-                    <TableCell>DNI</TableCell>
+                    <TableCell className="hidden md:table-cell">DNI</TableCell>
                     <TableCell>Habitacion</TableCell>
                     <TableCell>Estado</TableCell>
-                    <TableCell>Incidente</TableCell>
+                    <TableCell className="hidden md:table-cell">Incidente</TableCell>
                     <TableCell>Acciones</TableCell>
                   </TableRow>
                 </TableHead>
@@ -366,14 +371,14 @@ export function GeriatricoModule({
                           {patient.fullName}
                         </button>
                       </TableCell>
-                      <TableCell>{patient.dni}</TableCell>
+                      <TableCell className="hidden md:table-cell">{patient.dni}</TableCell>
                       <TableCell>{patient.room}</TableCell>
                       <TableCell>
                         <Badge variant={STATUS_VARIANT[patient.status]} className="capitalize">
                           {patient.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{patient.lastIncident}</TableCell>
+                      <TableCell className="hidden md:table-cell">{patient.lastIncident}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <Button
                           size="sm"

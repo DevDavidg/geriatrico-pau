@@ -73,15 +73,15 @@ export function PatientDetailModal({
     <dialog
       ref={dialogRef}
       onClose={onClose}
-      className="fixed inset-0 z-50 m-0 flex max-h-none max-w-none items-center justify-center border-0 bg-transparent p-4 backdrop:bg-[var(--color-ash)]/60"
+      className="fixed inset-0 z-50 m-0 flex max-h-none max-w-none items-center justify-center border-0 bg-transparent p-2 sm:p-4 backdrop:bg-[var(--color-ash)]/60"
       aria-labelledby="patient-detail-title"
     >
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[var(--radius-xl)] bg-[var(--color-surface)] shadow-[var(--shadow-modal)]">
-        <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-6">
+        <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-4 md:p-6">
           <div className="min-w-0 flex-1">
             <h1
               id="patient-detail-title"
-              className="font-['Lora',Georgia,serif] text-2xl font-semibold text-[var(--color-text-primary)]"
+              className="font-['Lora',Georgia,serif] text-xl md:text-2xl font-semibold text-[var(--color-text-primary)]"
             >
               {patient.fullName}
             </h1>
@@ -117,10 +117,10 @@ export function PatientDetailModal({
           </Button>
         </header>
 
-        <main className="space-y-6 p-6">
+        <main className="space-y-6 p-4 md:p-6">
           <section>
             <h2 className="mb-3 font-['Lora',Georgia,serif] text-lg font-semibold text-[var(--color-text-primary)]">Datos personales</h2>
-            <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <dl className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
                 <dt className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">Diagnostico</dt>
                 <dd className="text-[var(--color-text-primary)]">{patient.diagnosis || "-"}</dd>
@@ -145,7 +145,7 @@ export function PatientDetailModal({
                 <dt className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">Contacto de emergencia</dt>
                 <dd className="text-[var(--color-text-primary)]">{patient.emergencyContact || "-"}</dd>
               </div>
-              <div className="sm:col-span-2">
+              <div className="md:col-span-2">
                 <dt className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">Ultimo incidente</dt>
                 <dd className="text-[var(--color-text-primary)]">{patient.lastIncident || "-"}</dd>
               </div>

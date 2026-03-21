@@ -116,6 +116,46 @@ body {
   background: var(--color-alerta-tint);
 }
 
+.calendar-cell-shared-off {
+  cursor: pointer;
+  border-color: rgba(212, 165, 75, 0.55);
+  background: rgba(212, 165, 75, 0.12);
+  color: var(--color-text-primary);
+}
+
+.calendar-cell-shared-off:hover {
+  border-color: rgba(212, 165, 75, 0.85);
+}
+
+.calendar-cell-dual-franco {
+  box-shadow: inset 0 0 0 2px rgba(212, 165, 75, 0.65);
+}
+
+.tutorial-coach-ring {
+  border: 3px solid var(--color-manana);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--color-surface) 90%, transparent),
+    0 0 0 9999px color-mix(in srgb, var(--color-text-primary) 32%, transparent),
+    0 12px 40px rgba(0, 0, 0, 0.18);
+  animation: tutorial-coach-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes tutorial-coach-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--color-surface) 90%, transparent),
+      0 0 0 9999px color-mix(in srgb, var(--color-text-primary) 32%, transparent),
+      0 12px 40px rgba(0, 0, 0, 0.18);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--color-manana) 70%, transparent),
+      0 0 0 9999px color-mix(in srgb, var(--color-text-primary) 38%, transparent),
+      0 16px 48px rgba(0, 0, 0, 0.22);
+  }
+}
+
 @keyframes module-slide-in {
   from {
     opacity: 0;

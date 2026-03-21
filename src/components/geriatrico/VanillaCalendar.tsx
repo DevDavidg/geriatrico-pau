@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type RefObject } from "react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
@@ -12,11 +12,14 @@ interface VanillaCalendarProps {
   subtitle: string;
   selectedDates: string[];
   blockedDates?: string[];
+  sharedOffByDate?: Record<string, string>;
   notes: CalendarNoteMap;
   readonly?: boolean;
   onMonthChange: (month: Date) => void;
   onToggleDate: (dateKey: string) => void;
   onSaveNote: (dateKey: string, note: string) => void;
+  tutorialGridRef?: RefObject<HTMLDivElement | null>;
+  tutorialDayPanelRef?: RefObject<HTMLDivElement | null>;
 }
 
 export function VanillaCalendar({
@@ -25,11 +28,14 @@ export function VanillaCalendar({
   subtitle,
   selectedDates,
   blockedDates = [],
+  sharedOffByDate = {},
   notes,
   readonly = false,
   onMonthChange,
   onToggleDate,
   onSaveNote,
+  tutorialGridRef,
+  tutorialDayPanelRef,
 }: Readonly<VanillaCalendarProps>) {
   const [focusedDate, setFocusedDate] = useState<string>(selectedDates[0] ?? toDateKey(new Date()));
   const [draftNote, setDraftNote] = useState("");
@@ -37,6 +43,7 @@ export function VanillaCalendar({
 
   const selectedSet = new Set(selectedDates);
   const blockedSet = new Set(blockedDates);
+  const sharedOffLabels = sharedOffByDate;
   const monthLabel = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(month);
   const weekDays = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
   const cells = buildCalendar(month);
@@ -83,18 +90,23 @@ export function VanillaCalendar({
           </Button>
         </div>
 
-        <div className="calendar-grid">
+        <div ref={tutorialGridRef} className="calendar-grid">
           {weekDays.map((label) => (
             <span key={label} className="calendar-weekday">{label}</span>
           ))}
           {cells.map((cell) => {
             const isSelected = selectedSet.has(cell.dateKey);
             const isBlocked = blockedSet.has(cell.dateKey);
+            const sharedLabel = sharedOffLabels[cell.dateKey];
+            const isSharedOff = Boolean(sharedLabel) && !isSelected;
+            const isDualFranco = Boolean(sharedLabel) && isSelected;
             const classNames = [
               "calendar-cell",
               cell.inCurrentMonth ? "calendar-cell-current" : "calendar-cell-outside",
               isSelected ? "calendar-cell-selected" : "",
               isBlocked ? "calendar-cell-blocked" : "",
+              isSharedOff ? "calendar-cell-shared-off" : "",
+              isDualFranco ? "calendar-cell-dual-franco" : "",
               cell.dateKey === focusedDate ? "calendar-cell-focus" : "",
             ].filter(Boolean).join(" ");
 
@@ -103,6 +115,7 @@ export function VanillaCalendar({
                 key={cell.dateKey}
                 type="button"
                 className={classNames}
+                title={sharedLabel ? `También libre: ${sharedLabel}` : undefined}
                 onClick={() => {
                   setFocusedDate(cell.dateKey);
                   if (!readonly && cell.inCurrentMonth && !isBlocked) onToggleDate(cell.dateKey);
@@ -114,10 +127,21 @@ export function VanillaCalendar({
           })}
         </div>
 
-        <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-4">
+        <div
+          ref={tutorialDayPanelRef}
+          className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-4"
+        >
           <span className="font-['Lora',Georgia,serif] text-sm font-semibold capitalize text-[var(--color-text-primary)]">
             {formatDateLong(focusedDate)}
           </span>
+          {sharedOffLabels[focusedDate] ? (
+            <p className="mt-2 text-xs font-medium text-[var(--color-alerta)]">
+              Franco también marcado para: {sharedOffLabels[focusedDate]}
+              {selectedSet.has(focusedDate)
+                ? " · Esta mucama también tiene libre este día (coincidencia)."
+                : " · Podés marcarlo; se pedirá confirmación."}
+            </p>
+          ) : null}
           <Textarea
             className="mt-3 bg-[var(--color-surface)]"
             disabled={readonly}

@@ -1,14 +1,16 @@
-import { useDeferredValue, useEffect, useState, useTransition } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
 import {
   Alert,
   Divider,
   FormControl,
+  FormControlLabel,
   InputLabel,
   LinearProgress,
   MenuItem,
   Select,
   type SelectChangeEvent,
+  Switch,
   TextField,
 } from "@mui/material";
 
@@ -36,6 +38,7 @@ import type {
   UserRole,
 } from "./types";
 import { VanillaCalendar } from "./VanillaCalendar";
+import { MucamasTutorialCoach, type MucamasCoachStep } from "./mucamas-tutorial-coach";
 
 interface MucamasModuleProps {
   readonly sessionRole: UserRole | null;
@@ -62,7 +65,24 @@ function getInitialMaidCalendarNotes(): UserNoteMap {
 export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateToPatient }: Readonly<MucamasModuleProps>) {
   const [activeMaidId, setActiveMaidId] = useState(maidRoster[0].id);
   const [month, setMonth] = useState(new Date());
-  const [overlapError, setOverlapError] = useState("");
+  const [pendingOverlap, setPendingOverlap] = useState<{ dateKey: string; labels: string } | null>(null);
+  const [tutorialMode, setTutorialMode] = useState(false);
+  const [tutorialCoachStep, setTutorialCoachStep] = useState(0);
+  const coachMaidFieldRef = useRef<HTMLDivElement>(null);
+  const coachCalGridRef = useRef<HTMLDivElement>(null);
+  const coachCalDayPanelRef = useRef<HTMLDivElement>(null);
+  const coachDaysSummaryRef = useRef<HTMLDivElement>(null);
+  const coachTabCalRef = useRef<HTMLButtonElement>(null);
+  const coachTabCronoRef = useRef<HTMLButtonElement>(null);
+  const coachTabAccRef = useRef<HTMLButtonElement>(null);
+  const coachTaskFormRef = useRef<HTMLDivElement>(null);
+  const coachTaskAssignRef = useRef<HTMLDivElement>(null);
+  const coachTaskAddRef = useRef<HTMLDivElement>(null);
+  const coachTaskFilterRef = useRef<HTMLDivElement>(null);
+  const coachIncGridRef = useRef<HTMLDivElement>(null);
+  const coachIncDetailsRef = useRef<HTMLDivElement>(null);
+  const coachIncSubmitRef = useRef<HTMLDivElement>(null);
+  const coachIncListRef = useRef<HTMLDivElement>(null);
   const [daysOffByMaid, setDaysOffByMaid] = useState<UserCalendarMap>(initialMaidDaysOff);
   const [maidCalendarNotes, setMaidCalendarNotes] = useState<UserNoteMap>(getInitialMaidCalendarNotes);
   const [tasks, setTasks] = useState<MaidTask[]>(initialMaidTasks);
@@ -98,28 +118,154 @@ export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateTo
     setIncidentForm((previous) => ({ ...previous, reportedBy: sessionUser || maidRoster[0].name }));
   }, [sessionUser]);
 
+  useEffect(() => {
+    setPendingOverlap(null);
+  }, [activeMaidId]);
+
+  useEffect(() => {
+    if (!tutorialMode) return;
+    setTutorialCoachStep(0);
+  }, [tutorialMode, step]);
+
+  const coachSteps = useMemo((): MucamasCoachStep[] => {
+    if (step === 0) {
+      return [
+        {
+          targetRef: coachMaidFieldRef,
+          text: "Elegí la mucama que estás configurando. Todo lo que marques en el calendario y las notas quedan asociados a ella.",
+        },
+        {
+          targetRef: coachDaysSummaryRef,
+          text: "Acá ves el resumen de francos ya cargados para la mucama activa.",
+        },
+        {
+          targetRef: coachCalGridRef,
+          text: "Tocá los días del mes para cargar o quitar francos. El asistente hace scroll automático hasta cada zona.",
+        },
+        {
+          targetRef: coachCalDayPanelRef,
+          text: "Las celdas ámbar indican franco de otra compañera; si elegís el mismo día, aparece advertencia y podés confirmar. Acá anotás el día seleccionado y guardás con Guardar anotación.",
+        },
+        {
+          targetRef: coachTabCronoRef,
+          text: "Abrí la pestaña Cronograma diario para seguir con tareas y turnos.",
+        },
+      ];
+    }
+    if (step === 1) {
+      return [
+        {
+          targetRef: coachTaskFormRef,
+          text: "Completá actividad, descripción si hace falta, área, fecha y turno. Arriba queda quién registra.",
+        },
+        {
+          targetRef: coachTaskAssignRef,
+          text: "Indicá a qué mucama va asignada la tarea.",
+        },
+        {
+          targetRef: coachTaskAddRef,
+          text: "Pulsá Agregar tarea para registrarla en el cronograma.",
+        },
+        {
+          targetRef: coachTaskFilterRef,
+          text: "Filtrá por turno y revisá el listado debajo; podés marcar tareas como completadas.",
+        },
+        {
+          targetRef: coachTabAccRef,
+          text: "Continuá en Accidentes para el registro formal de incidentes.",
+        },
+      ];
+    }
+    return [
+      {
+        targetRef: coachIncGridRef,
+        text: "Completá fecha, ubicación, severidad, reportante y, si aplica, paciente vinculado.",
+      },
+      {
+        targetRef: coachIncDetailsRef,
+        text: "Describí el accidente con el mayor detalle posible en este campo.",
+      },
+      {
+        targetRef: coachIncSubmitRef,
+        text: "Registrá el incidente. Queda trazabilidad de quién cargó el dato.",
+      },
+      {
+        targetRef: coachIncListRef,
+        text: "El historial se lista acá; si hay paciente vinculado podés abrir su ficha.",
+      },
+      {
+        targetRef: coachTabCalRef,
+        text: "Cuando quieras, volvé al calendario para revisar francos otra vez.",
+      },
+    ];
+  }, [step]);
+
   const readOnly = sessionRole === "admin" && !editMode;
   const selectedDates = daysOffByMaid[activeMaidId] ?? [];
   const selectedNotes = maidCalendarNotes[activeMaidId] ?? {};
-  const blockedDates = Object.entries(daysOffByMaid)
-    .filter(([maidId]) => maidId !== activeMaidId)
-    .flatMap(([, dates]) => dates);
+  const sharedOffByDate = useMemo(() => {
+    const byDate: Record<string, string[]> = {};
+    for (const [maidId, dates] of Object.entries(daysOffByMaid)) {
+      if (maidId === activeMaidId) continue;
+      const name = maidRoster.find((m) => m.id === maidId)?.name ?? maidId;
+      for (const dateKey of dates) {
+        const bucket = byDate[dateKey] ?? [];
+        bucket.push(name);
+        byDate[dateKey] = bucket;
+      }
+    }
+    const out: Record<string, string> = {};
+    for (const [dateKey, names] of Object.entries(byDate)) {
+      out[dateKey] = [...new Set(names)].join(", ");
+    }
+    return out;
+  }, [daysOffByMaid, activeMaidId]);
   const visibleTasks = tasks.filter((task) =>
     deferredShiftFilter === "Todos" ? true : task.shift === deferredShiftFilter
   );
 
+  function otherFrancoLabelsForDate(dateKey: string): string {
+    const names: string[] = [];
+    for (const [maidId, dates] of Object.entries(daysOffByMaid)) {
+      if (maidId === activeMaidId) continue;
+      if (dates.includes(dateKey)) {
+        names.push(maidRoster.find((m) => m.id === maidId)?.name ?? maidId);
+      }
+    }
+    return [...new Set(names)].join(", ");
+  }
+
   function toggleDate(dateKey: string) {
     if (readOnly) return;
-    if (blockedDates.includes(dateKey)) {
-      setOverlapError("Ese día ya está tomado por otra mucama. Elegí otro para no pisar cronogramas.");
+    const current = daysOffByMaid[activeMaidId] ?? [];
+    if (current.includes(dateKey)) {
+      setPendingOverlap(null);
+      setDaysOffByMaid((previous) => ({
+        ...previous,
+        [activeMaidId]: current.filter((item) => item !== dateKey),
+      }));
       return;
     }
-    setOverlapError("");
+    const labels = otherFrancoLabelsForDate(dateKey);
+    if (labels) {
+      setPendingOverlap({ dateKey, labels });
+      return;
+    }
+    setPendingOverlap(null);
     setDaysOffByMaid((previous) => {
-      const current = previous[activeMaidId] ?? [];
-      const alreadyPicked = current.includes(dateKey);
-      const next = alreadyPicked ? current.filter((item) => item !== dateKey) : [...current, dateKey].sort((a, b) => a.localeCompare(b));
-      return { ...previous, [activeMaidId]: next };
+      const prevCurrent = previous[activeMaidId] ?? [];
+      return { ...previous, [activeMaidId]: [...prevCurrent, dateKey].sort((a, b) => a.localeCompare(b)) };
+    });
+  }
+
+  function confirmPendingFranco() {
+    if (readOnly || !pendingOverlap) return;
+    const { dateKey } = pendingOverlap;
+    setPendingOverlap(null);
+    setDaysOffByMaid((previous) => {
+      const prevCurrent = previous[activeMaidId] ?? [];
+      if (prevCurrent.includes(dateKey)) return previous;
+      return { ...previous, [activeMaidId]: [...prevCurrent, dateKey].sort((a, b) => a.localeCompare(b)) };
     });
   }
 
@@ -208,23 +354,43 @@ export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateTo
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <TextField
-                fullWidth
-                select
-                label="Mucama activa"
-                value={activeMaidId}
-                disabled={readOnly}
-                onChange={(event) => setActiveMaidId(event.target.value)}
-              >
-                {maidRoster.map((maid) => (
-                  <MenuItem key={maid.id} value={maid.id}>
-                    {maid.name} · Sector {maid.squad}
-                  </MenuItem>
-                ))}
-              </TextField>
+              <div ref={coachMaidFieldRef}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Mucama activa"
+                  value={activeMaidId}
+                  disabled={readOnly}
+                  onChange={(event) => setActiveMaidId(event.target.value)}
+                >
+                  {maidRoster.map((maid) => (
+                    <MenuItem key={maid.id} value={maid.id}>
+                      {maid.name} · Sector {maid.squad}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </div>
               <Alert severity="info">Regla operativa: las mucamas trabajan 12hs dia por medio.</Alert>
-              {overlapError ? <Alert severity="warning">{overlapError}</Alert> : null}
-              <div className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-4">
+              {pendingOverlap ? (
+                <Alert severity="warning" className="flex flex-col items-stretch gap-3">
+                  <span>
+                    {formatDateLong(pendingOverlap.dateKey)}: ya figura libre para {pendingOverlap.labels}. Si confirmás, dos
+                    mucamas quedan con franco el mismo día (riesgo de cobertura). Revisá el cronograma.
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => setPendingOverlap(null)}>
+                      Cancelar
+                    </Button>
+                    <Button type="button" variant="default" size="sm" disabled={readOnly} onClick={confirmPendingFranco}>
+                      Confirmar franco
+                    </Button>
+                  </div>
+                </Alert>
+              ) : null}
+              <div
+                ref={coachDaysSummaryRef}
+                className="rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-4"
+              >
                 <span className="font-['Lora',Georgia,serif] text-sm font-semibold text-[var(--color-text-primary)]">Dias libres actuales</span>
                 {selectedDates.length === 0 ? (
                   <p className="mt-2 text-sm text-[var(--color-text-muted)]">No hay dias seleccionados.</p>
@@ -244,13 +410,15 @@ export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateTo
             month={month}
             onMonthChange={setMonth}
             title="Calendario de mucamas"
-            subtitle="Los dias libres no pueden pisarse entre companeras."
+            subtitle="Los francos de otras mucamas se muestran en ámbar; podés marcar el mismo día con confirmación."
             selectedDates={selectedDates}
-            blockedDates={blockedDates}
+            sharedOffByDate={sharedOffByDate}
             notes={selectedNotes}
             readonly={readOnly}
             onToggleDate={toggleDate}
             onSaveNote={saveDateNote}
+            tutorialGridRef={coachCalGridRef}
+            tutorialDayPanelRef={coachCalDayPanelRef}
           />
         </div>
       );
@@ -258,6 +426,7 @@ export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateTo
 
     if (step === 1) {
       return (
+        <div className="flex flex-col gap-5">
         <Card>
           <CardHeader>
             <CardTitle>Cronograma diario</CardTitle>
@@ -267,59 +436,63 @@ export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateTo
           </CardHeader>
           <CardContent className="space-y-4">
             {isPending ? <LinearProgress /> : null}
-            <h4 className="font-['Lora',Georgia,serif] text-sm font-semibold text-[var(--color-text-primary)]">Nueva tarea</h4>
-            <TextField
-              label="Usuario que registra"
-              value={sessionUser || "Usuario"}
-              disabled
-              fullWidth
-            />
-            <div className="grid gap-3 md:grid-cols-2">
+            <div ref={coachTaskFormRef} className="space-y-4">
+              <h4 className="font-['Lora',Georgia,serif] text-sm font-semibold text-[var(--color-text-primary)]">Nueva tarea</h4>
               <TextField
-                label="Actividad"
-                value={taskForm.title}
-                disabled={readOnly}
-                onChange={(event) => setTaskForm((previous) => ({ ...previous, title: event.target.value }))}
+                label="Usuario que registra"
+                value={sessionUser || "Usuario"}
+                disabled
                 fullWidth
               />
-              <TextField
-                label="Descripcion"
-                value={taskForm.description}
-                disabled={readOnly}
-                onChange={(event) => setTaskForm((previous) => ({ ...previous, description: event.target.value }))}
-                fullWidth
-              />
-              <TextField
-                label="Área"
-                value={taskForm.area}
-                disabled={readOnly}
-                onChange={(event) => setTaskForm((previous) => ({ ...previous, area: event.target.value }))}
-                fullWidth
-              />
-              <TextField
-                label="Fecha"
-                type="date"
-                InputLabelProps={{ shrink: true }}
-                value={taskForm.dateKey}
-                disabled={readOnly}
-                onChange={(event) => setTaskForm((previous) => ({ ...previous, dateKey: event.target.value }))}
-                fullWidth
-              />
-              <FormControl fullWidth disabled={readOnly}>
-                <InputLabel id="task-shift-label">Turno</InputLabel>
-                <Select
-                  labelId="task-shift-label"
-                  label="Turno"
-                  value={taskForm.shift}
-                  onChange={(event: SelectChangeEvent<ShiftType>) =>
-                    setTaskForm((previous) => ({ ...previous, shift: event.target.value as ShiftType }))
-                  }
-                >
-                  <MenuItem value="Mañana">Mañana</MenuItem>
-                  <MenuItem value="Tarde">Tarde</MenuItem>
-                  <MenuItem value="Noche">Noche</MenuItem>
-                </Select>
-              </FormControl>
+              <div className="grid gap-3 md:grid-cols-2">
+                <TextField
+                  label="Actividad"
+                  value={taskForm.title}
+                  disabled={readOnly}
+                  onChange={(event) => setTaskForm((previous) => ({ ...previous, title: event.target.value }))}
+                  fullWidth
+                />
+                <TextField
+                  label="Descripcion"
+                  value={taskForm.description}
+                  disabled={readOnly}
+                  onChange={(event) => setTaskForm((previous) => ({ ...previous, description: event.target.value }))}
+                  fullWidth
+                />
+                <TextField
+                  label="Área"
+                  value={taskForm.area}
+                  disabled={readOnly}
+                  onChange={(event) => setTaskForm((previous) => ({ ...previous, area: event.target.value }))}
+                  fullWidth
+                />
+                <TextField
+                  label="Fecha"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={taskForm.dateKey}
+                  disabled={readOnly}
+                  onChange={(event) => setTaskForm((previous) => ({ ...previous, dateKey: event.target.value }))}
+                  fullWidth
+                />
+                <FormControl fullWidth disabled={readOnly}>
+                  <InputLabel id="task-shift-label">Turno</InputLabel>
+                  <Select
+                    labelId="task-shift-label"
+                    label="Turno"
+                    value={taskForm.shift}
+                    onChange={(event: SelectChangeEvent<ShiftType>) =>
+                      setTaskForm((previous) => ({ ...previous, shift: event.target.value as ShiftType }))
+                    }
+                  >
+                    <MenuItem value="Mañana">Mañana</MenuItem>
+                    <MenuItem value="Tarde">Tarde</MenuItem>
+                    <MenuItem value="Noche">Noche</MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+            </div>
+            <div ref={coachTaskAssignRef}>
               <TextField
                 select
                 label="Asignada a"
@@ -335,12 +508,15 @@ export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateTo
                 ))}
               </TextField>
             </div>
-            <Button disabled={readOnly} onClick={addTask}>
-              <EventAvailableOutlinedIcon fontSize="small" />
-              Agregar tarea
-            </Button>
+            <div ref={coachTaskAddRef}>
+              <Button disabled={readOnly} onClick={addTask}>
+                <EventAvailableOutlinedIcon fontSize="small" />
+                Agregar tarea
+              </Button>
+            </div>
             <Divider />
             <h4 className="font-['Lora',Georgia,serif] text-sm font-semibold text-[var(--color-text-primary)]">Listado de tareas</h4>
+            <div ref={coachTaskFilterRef}>
             <TextField
               select
               label="Filtrar por turno"
@@ -353,6 +529,7 @@ export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateTo
               <MenuItem value="Tarde">Tarde</MenuItem>
               <MenuItem value="Noche">Noche</MenuItem>
             </TextField>
+            </div>
             <div className="space-y-2">
               {visibleTasks.map((task) => {
                 const assignedName = maidRoster.find((maid) => maid.id === task.assignedTo)?.name ?? "Sin asignar";
@@ -395,11 +572,12 @@ export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateTo
             </div>
           </CardContent>
         </Card>
+        </div>
       );
     }
 
     return (
-      <>
+      <div className="flex flex-col gap-5">
         <Card>
           <CardHeader>
             <CardTitle>Registrar accidente</CardTitle>
@@ -408,7 +586,7 @@ export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateTo
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-2">
+            <div ref={coachIncGridRef} className="grid gap-3 md:grid-cols-2">
               <TextField
                 label="Usuario que registra"
                 value={sessionUser || "Usuario"}
@@ -485,16 +663,20 @@ export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateTo
                 ))}
               </TextField>
             </div>
-            <Textarea
-              placeholder="Descripcion del accidente..."
-              value={incidentForm.details}
-              disabled={readOnly}
-              onChange={(event) => setIncidentForm((previous) => ({ ...previous, details: event.target.value }))}
-            />
-            <Button variant="destructive" disabled={readOnly} onClick={addIncident}>
-              Registrar accidente
-            </Button>
-            <div className="space-y-2">
+            <div ref={coachIncDetailsRef}>
+              <Textarea
+                placeholder="Descripcion del accidente..."
+                value={incidentForm.details}
+                disabled={readOnly}
+                onChange={(event) => setIncidentForm((previous) => ({ ...previous, details: event.target.value }))}
+              />
+            </div>
+            <div ref={coachIncSubmitRef}>
+              <Button variant="destructive" disabled={readOnly} onClick={addIncident}>
+                Registrar accidente
+              </Button>
+            </div>
+            <div ref={coachIncListRef} className="space-y-2">
               {incidents.map((incident) => (
                 <div
                   key={incident.id}
@@ -542,16 +724,31 @@ export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateTo
             </svg>
           </Button>
         )}
-      </>
+      </div>
     );
   })();
 
   return (
     <section className="module-content-grid">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] px-3 py-2">
+        <FormControlLabel
+          className="m-0"
+          control={
+            <Switch
+              checked={tutorialMode}
+              onChange={(_, checked) => setTutorialMode(checked)}
+              color="primary"
+              size="small"
+            />
+          }
+          label={<span className="text-sm font-medium text-[var(--color-text-primary)]">Modo tutorial</span>}
+        />
+      </div>
       <div className="flex gap-0 rounded-[var(--radius-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-alt)] p-1">
         {stepLabels.map((label, idx) => (
           <button
             key={label}
+            ref={idx === 0 ? coachTabCalRef : idx === 1 ? coachTabCronoRef : coachTabAccRef}
             type="button"
             onClick={() => setStep(idx as 0 | 1 | 2)}
             className={`flex-1 rounded-[var(--radius-md)] px-3 py-1.5 text-sm font-medium transition-all ${
@@ -567,6 +764,19 @@ export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateTo
       <div key={step} className="module-slide-pane">
         {stepContent}
       </div>
+      {tutorialMode ? (
+        <MucamasTutorialCoach
+          active={tutorialMode}
+          steps={coachSteps}
+          stepIndex={tutorialCoachStep}
+          onStepIndexChange={setTutorialCoachStep}
+          onCloseTutorial={() => {
+            setTutorialMode(false);
+            setTutorialCoachStep(0);
+          }}
+          sectionLabel={stepLabels[step]}
+        />
+      ) : null}
     </section>
   );
 }

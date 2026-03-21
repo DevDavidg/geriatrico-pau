@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
@@ -30,19 +30,33 @@ export function VanillaCalendar({
   onMonthChange,
   onToggleDate,
   onSaveNote,
-}: VanillaCalendarProps) {
+}: Readonly<VanillaCalendarProps>) {
   const [focusedDate, setFocusedDate] = useState<string>(selectedDates[0] ?? toDateKey(new Date()));
   const [draftNote, setDraftNote] = useState("");
+  const [saveMessage, setSaveMessage] = useState("");
 
   const selectedSet = new Set(selectedDates);
   const blockedSet = new Set(blockedDates);
   const monthLabel = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(month);
   const weekDays = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
   const cells = buildCalendar(month);
+  const savedNoteEntries = useMemo(
+    () =>
+      Object.entries(notes)
+        .filter(([, value]) => value.trim().length > 0)
+        .sort(([left], [right]) => left.localeCompare(right)),
+    [notes],
+  );
 
   useEffect(() => {
     setDraftNote(notes[focusedDate] ?? "");
   }, [focusedDate, notes]);
+
+  useEffect(() => {
+    if (!saveMessage) return;
+    const timeoutId = globalThis.setTimeout(() => setSaveMessage(""), 2200);
+    return () => globalThis.clearTimeout(timeoutId);
+  }, [saveMessage]);
 
   return (
     <Card>
@@ -90,11 +104,9 @@ export function VanillaCalendar({
                 type="button"
                 className={classNames}
                 onClick={() => {
-                  if (readonly) return;
                   setFocusedDate(cell.dateKey);
-                  if (cell.inCurrentMonth && !isBlocked) onToggleDate(cell.dateKey);
+                  if (!readonly && cell.inCurrentMonth && !isBlocked) onToggleDate(cell.dateKey);
                 }}
-                disabled={isBlocked || readonly}
               >
                 {cell.dayNumber}
               </button>
@@ -121,10 +133,33 @@ export function VanillaCalendar({
               variant="secondary"
               size="sm"
               disabled={readonly}
-              onClick={() => { if (!readonly) onSaveNote(focusedDate, draftNote); }}
+              onClick={() => {
+                if (readonly) return;
+                onSaveNote(focusedDate, draftNote);
+                setSaveMessage(`Guardado: ${formatDateLong(focusedDate)}`);
+              }}
             >
               Guardar anotacion
             </Button>
+          </div>
+          {saveMessage ? (
+            <p className="mt-2 text-xs text-[var(--color-text-secondary)]">{saveMessage}</p>
+          ) : null}
+          <div className="mt-3 space-y-1">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+              Dias con anotacion guardada
+            </span>
+            {savedNoteEntries.length === 0 ? (
+              <p className="text-xs text-[var(--color-text-muted)]">Sin anotaciones guardadas.</p>
+            ) : (
+              <ul className="space-y-1">
+                {savedNoteEntries.map(([dateKey, note]) => (
+                  <li key={dateKey} className="text-xs text-[var(--color-text-secondary)]">
+                    {formatDateLong(dateKey)} · {note}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </CardContent>

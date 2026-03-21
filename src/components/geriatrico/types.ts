@@ -111,6 +111,7 @@ export interface MaidTask {
   shift: ShiftType;
   assignedTo: string;
   completed: boolean;
+  createdBy?: string;
 }
 
 export interface IncidentLog {
@@ -122,4 +123,5 @@ export interface IncidentLog {
   severity: "Baja" | "Media" | "Alta";
   patientId?: string;
   patientName?: string;
+  registeredBy?: string;
 }

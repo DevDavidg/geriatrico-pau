@@ -396,6 +396,7 @@ export default function GeriatricoPauApp() {
                 {activeModule === "mucamas" ? (
                   <MucamasModule
                     sessionRole={sessionRole}
+                    sessionUser={sessionUser}
                     editMode={editMode}
                     onNavigateToPatient={navigateToPatient}
                   />

@@ -1,4 +1,4 @@
-import { useDeferredValue, useState, useTransition } from "react";
+import { useDeferredValue, useEffect, useState, useTransition } from "react";
 import EventAvailableOutlinedIcon from "@mui/icons-material/EventAvailableOutlined";
 import {
   Alert,
@@ -25,7 +25,7 @@ import {
   initialMaidTasks,
   maidRoster,
 } from "./mock-data";
-import { SHIFT_COLOR, SHIFT_BADGE_VARIANT } from "../../lib/shift-colors";
+import { SHIFT_COLOR } from "../../lib/shift-colors";
 import type {
   IncidentLog,
   MaidTask,
@@ -39,16 +39,32 @@ import { VanillaCalendar } from "./VanillaCalendar";
 
 interface MucamasModuleProps {
   readonly sessionRole: UserRole | null;
+  readonly sessionUser: string;
   readonly editMode: boolean;
   readonly onNavigateToPatient: (patientId: string) => void;
 }
 
-export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Readonly<MucamasModuleProps>) {
+const MAID_CALENDAR_NOTES_STORAGE_KEY = "lumina.mucamas.calendar-notes.v1";
+
+function getInitialMaidCalendarNotes(): UserNoteMap {
+  if (globalThis.window === undefined) return initialMaidCalendarNotes;
+  const storedValue = globalThis.window.localStorage.getItem(MAID_CALENDAR_NOTES_STORAGE_KEY);
+  if (!storedValue) return initialMaidCalendarNotes;
+  try {
+    const parsed = JSON.parse(storedValue);
+    if (!parsed || typeof parsed !== "object") return initialMaidCalendarNotes;
+    return parsed as UserNoteMap;
+  } catch {
+    return initialMaidCalendarNotes;
+  }
+}
+
+export function MucamasModule({ sessionRole, sessionUser, editMode, onNavigateToPatient }: Readonly<MucamasModuleProps>) {
   const [activeMaidId, setActiveMaidId] = useState(maidRoster[0].id);
   const [month, setMonth] = useState(new Date());
   const [overlapError, setOverlapError] = useState("");
   const [daysOffByMaid, setDaysOffByMaid] = useState<UserCalendarMap>(initialMaidDaysOff);
-  const [maidCalendarNotes, setMaidCalendarNotes] = useState<UserNoteMap>(initialMaidCalendarNotes);
+  const [maidCalendarNotes, setMaidCalendarNotes] = useState<UserNoteMap>(getInitialMaidCalendarNotes);
   const [tasks, setTasks] = useState<MaidTask[]>(initialMaidTasks);
   const [taskForm, setTaskForm] = useState({
     title: "",
@@ -63,7 +79,7 @@ export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Re
     dateKey: toDateKey(new Date()),
     location: "Dentro" as "Dentro" | "Fuera",
     details: "",
-    reportedBy: maidRoster[0].name,
+    reportedBy: sessionUser || maidRoster[0].name,
     severity: "Media" as "Baja" | "Media" | "Alta",
     patientId: "",
     patientName: "",
@@ -72,6 +88,15 @@ export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Re
   const deferredShiftFilter = useDeferredValue(shiftFilter);
   const [isPending, startTransition] = useTransition();
   const [step, setStep] = useState<0 | 1 | 2>(0);
+
+  useEffect(() => {
+    if (globalThis.window === undefined) return;
+    globalThis.window.localStorage.setItem(MAID_CALENDAR_NOTES_STORAGE_KEY, JSON.stringify(maidCalendarNotes));
+  }, [maidCalendarNotes]);
+
+  useEffect(() => {
+    setIncidentForm((previous) => ({ ...previous, reportedBy: sessionUser || maidRoster[0].name }));
+  }, [sessionUser]);
 
   const readOnly = sessionRole === "admin" && !editMode;
   const selectedDates = daysOffByMaid[activeMaidId] ?? [];
@@ -120,6 +145,7 @@ export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Re
       shift: taskForm.shift,
       assignedTo: taskForm.assignedTo,
       completed: false,
+      createdBy: sessionUser || "Usuario",
     };
     startTransition(() => {
       setTasks((previous) => [nextTask, ...previous]);
@@ -153,6 +179,7 @@ export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Re
       severity: incidentForm.severity,
       patientId: incidentForm.patientId || undefined,
       patientName: patient?.fullName ?? (incidentForm.patientName || undefined),
+      registeredBy: sessionUser || "Usuario",
     };
     setIncidents((previous) => [nextIncident, ...previous]);
     setIncidentForm((previous) => ({
@@ -241,6 +268,12 @@ export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Re
           <CardContent className="space-y-4">
             {isPending ? <LinearProgress /> : null}
             <h4 className="font-['Lora',Georgia,serif] text-sm font-semibold text-[var(--color-text-primary)]">Nueva tarea</h4>
+            <TextField
+              label="Usuario que registra"
+              value={sessionUser || "Usuario"}
+              disabled
+              fullWidth
+            />
             <div className="grid gap-3 md:grid-cols-2">
               <TextField
                 label="Actividad"
@@ -353,6 +386,9 @@ export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Re
                     <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                       {task.dateKey} · {task.shift} · {task.area} · {assignedName}
                     </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      Registrada por: {task.createdBy ?? "Usuario"}
+                    </p>
                   </div>
                 );
               })}
@@ -373,6 +409,12 @@ export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Re
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 md:grid-cols-2">
+              <TextField
+                label="Usuario que registra"
+                value={sessionUser || "Usuario"}
+                disabled
+                fullWidth
+              />
               <TextField
                 type="date"
                 label="Fecha"
@@ -467,6 +509,9 @@ export function MucamasModule({ sessionRole, editMode, onNavigateToPatient }: Re
                   </span>
                   <p className="text-xs text-[var(--color-text-muted)]">
                     {incident.dateKey} · {incident.reportedBy}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-muted)]">
+                    Registrado por: {incident.registeredBy ?? "Usuario"}
                   </p>
                   {incident.patientName && incident.patientId ? (
                     <button

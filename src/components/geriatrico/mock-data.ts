@@ -24,7 +24,7 @@ export const nurseRoster: Nurse[] = [
     color: "#E4A853",
     phone: "+54 11 5555-1001",
     startDate: "2024-06-01",
-    email: "kelly@lumina.com",
+    email: "kelly@merita.com",
   },
   {
     id: "ruth",
@@ -35,7 +35,7 @@ export const nurseRoster: Nurse[] = [
     color: "#3F4B6B",
     phone: "+54 11 5555-1002",
     startDate: "2023-11-15",
-    email: "ruth@lumina.com",
+    email: "ruth@merita.com",
   },
   {
     id: "noelia",
@@ -46,7 +46,7 @@ export const nurseRoster: Nurse[] = [
     color: "#829A84",
     phone: "+54 11 5555-1003",
     startDate: "2025-01-10",
-    email: "noelia@lumina.com",
+    email: "noelia@merita.com",
   },
   {
     id: "belen",
@@ -57,7 +57,7 @@ export const nurseRoster: Nurse[] = [
     color: "#E4A853",
     phone: "+54 11 5555-1004",
     startDate: "2025-08-20",
-    email: "belen@lumina.com",
+    email: "belen@merita.com",
   },
 ];
 
